@@ -89,7 +89,7 @@ Borderless printing is not preferred because the L15150 can enlarge the page sli
 
 The corrected output was confirmed on August 5, 2026. The fixed L15150/RC Woven correction remains in normal printing, and the temporary calibration controls and calibration-sheet generator have been removed.
 
-Automatic Check, Preview, Save, and Share remain color-neutral in the finalized Version 1.0.1 release. Direct printing alone applies the confirmed warmer tone to the photo subject (red 106 percent, green 101.5 percent, blue 94 percent). The person mask uses a genuinely alpha-enabled bitmap, and every photo cell is explicitly filled white before the person is drawn. This prevents transparent background pixels from flattening to black while keeping the pure-white page/background and black cutting guides outside the warm treatment. The complete result was tested successfully on the L15150 with RC Woven matte paper before release.
+Automatic Check, Preview, Save, and Share remain color-neutral in the finalized Version 1.0.2 release. Direct printing alone applies the confirmed warmer tone to the photo subject (red 106 percent, green 101.5 percent, blue 94 percent). The person mask uses a genuinely alpha-enabled bitmap, and every photo cell is explicitly filled white before the person is drawn. This prevents transparent background pixels from flattening to black while keeping the pure-white page/background and black cutting guides outside the warm treatment. The complete result was tested successfully on the L15150 with RC Woven matte paper before release.
 
 ## Printing behavior
 
@@ -141,4 +141,4 @@ The first usable prototype succeeds when it can:
 
 ## Suggested next step
 
-Test all eight Version 1.0.2 combinations on the connected Samsung phone. Confirm selector readability, exact preview counts, Back navigation, Save/Share output, and at least one direct paper print before finalizing the release.
+Preserve Version 1.0.2 as the stable selectable-layout release. Begin later features on a separate Git branch, increase Android's version code and name, and keep the confirmed print correction, cutting gaps, release signing key, and direct-print workflow covered by automated tests.

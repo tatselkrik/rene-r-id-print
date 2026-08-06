@@ -2,7 +2,7 @@
 
 ## What Git Does
 
-Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and the finalized white-background release is marked with the tag `v1.0.1`.
+Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and the finalized selectable-layout release is marked with the tag `v1.0.2`. Version 1.0.1 remains preserved under `v1.0.1`.
 
 Useful commands in Android Studio's Terminal:
 
@@ -14,14 +14,14 @@ git tag
 
 - `git status` shows files changed since the last saved snapshot.
 - `git log --oneline --decorate` shows saved versions.
-- `git tag` lists release markers such as `v1.0.0` and `v1.0.1`.
+- `git tag` lists release markers such as `v1.0.0`, `v1.0.1`, and `v1.0.2`.
 
 ## Adding a Feature Later
 
-Start new work on a separate branch so the stable release remains safe. Version 1.0.2 is currently tested on `codex/v1.0.2-combination-selector`:
+Start new work on a separate branch so the stable release remains safe. For example:
 
 ```powershell
-git switch -c codex/v1.0.2-combination-selector
+git switch -c codex/short-feature-name
 ```
 
 After the feature has been tested:
@@ -30,10 +30,10 @@ After the feature has been tested:
 git add -A
 git commit -m "Add selectable preview layouts"
 git switch main
-git merge codex/v1.0.2-combination-selector
+git merge codex/short-feature-name
 ```
 
-For that feature release, set Android's `versionName` to `1.0.2`, increase `versionCode` to `3`, build the installer with the same signing key, and add the Git tag `v1.0.2`.
+For the next release, choose the new `versionName`, increase `versionCode` above `3`, build the installer with the same signing key, and add a matching Git tag only after testing passes.
 
 ## Local Git Versus Backup
 

@@ -1,10 +1,10 @@
 # Rene'R ID Print
 
-Version 1.0.2 test candidate of the native Android app for capturing one person, choosing one of eight maximum-use even-number combinations, producing a 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi. Version 1.0.1 remains the finalized stable release until this candidate passes phone and paper testing.
+Version 1.0.2 final release of the native Android app for capturing one person, choosing one of eight maximum-use even-number combinations, producing a 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
 
 The product requirements in `ID_Photo_Printing_Automation_Project_Context.md` remain the source of truth.
 
-## Version 1.0.2 test-candidate status
+## Version 1.0.2 release status
 
 Implemented in this milestone:
 
@@ -84,9 +84,9 @@ These requirements need a decision or physical test before production use:
 - Whether Wi-Fi Direct or remote printing is needed for genuinely separate networks; the current app targets the bridged home LAN.
 - Automatic photo deletion policy. Captures and temporary generated print files currently stay only in the app cache and are not uploaded. JPEGs explicitly saved by the operator go to the location they choose.
 
-## Version 1.0.2 testing
+## Version 1.0.2 finalization
 
-The selector, preview, save/share output, and direct print output must be checked on the Samsung phone before the candidate is merged into `main`, tagged, signed, and finalized as Version 1.0.2. Version 1.0.1 remains available under the `v1.0.1` Git tag.
+The selector and all eight layouts passed automated geometry, copy-count, cutting-gap, corrected-page-bound, build, lint, APK-signature, installation, and connected-phone checks. The approved release is merged into `main` and marked by the `v1.0.2` Git tag. Version 1.0.1 remains available under the `v1.0.1` tag.
 
 ## Reference PSD
 
