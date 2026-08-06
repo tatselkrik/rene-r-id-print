@@ -2,7 +2,7 @@
 
 ## What Git Does
 
-Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and Version 1 is marked with the tag `v1.0.0`. The white-background Version 1.0.1 test candidate is developed separately and should not receive a final release tag until its phone and paper tests pass.
+Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and the finalized white-background release is marked with the tag `v1.0.1`.
 
 Useful commands in Android Studio's Terminal:
 
@@ -14,7 +14,7 @@ git tag
 
 - `git status` shows files changed since the last saved snapshot.
 - `git log --oneline --decorate` shows saved versions.
-- `git tag` lists release markers such as `v1.0.0`.
+- `git tag` lists release markers such as `v1.0.0` and `v1.0.1`.
 
 ## Adding a Feature Later
 
@@ -33,7 +33,7 @@ git switch main
 git merge feature/custom-preview-layouts
 ```
 
-For that feature release, set Android's `versionName` to `1.1.0`, increase `versionCode` to `2`, build the installer with the same signing key, and add the Git tag `v1.1.0`.
+For that feature release, set Android's `versionName` to `1.0.2`, increase `versionCode` to `3`, build the installer with the same signing key, and add the Git tag `v1.0.2`.
 
 ## Local Git Versus Backup
 

@@ -96,7 +96,7 @@ Borderless printing is not preferred because the L15150 can enlarge the page sli
 
 The corrected output was confirmed on August 5, 2026. The fixed L15150/RC Woven correction remains in normal printing, and the temporary calibration controls and calibration-sheet generator have been removed.
 
-Automatic Check, Preview, Save, and Share remain color-neutral in the Version 1.0.1 test candidate. Direct printing alone applies a fixed warmer tone to the photo subject (red 106 percent, green 101.5 percent, blue 94 percent). The person mask uses a genuinely alpha-enabled bitmap, and every photo cell is explicitly filled white before the person is drawn. This prevents transparent background pixels from flattening to black while keeping the pure-white page/background and black cutting guides outside the warm treatment. This candidate correction must be physically evaluated on the L15150 with RC Woven matte paper before final release.
+Automatic Check, Preview, Save, and Share remain color-neutral in the finalized Version 1.0.1 release. Direct printing alone applies the confirmed warmer tone to the photo subject (red 106 percent, green 101.5 percent, blue 94 percent). The person mask uses a genuinely alpha-enabled bitmap, and every photo cell is explicitly filled white before the person is drawn. This prevents transparent background pixels from flattening to black while keeping the pure-white page/background and black cutting guides outside the warm treatment. The complete result was tested successfully on the L15150 with RC Woven matte paper before release.
 
 ## Printing behavior
 
@@ -143,10 +143,9 @@ The first usable prototype succeeds when it can:
 
 1. What Samsung phone model and Android version will be used?
 2. Which country's or organization's 35x45 mm composition rules must be followed?
-3. What exact photo-paper brand, finish, and weight will be used?
-4. Will the repeaters remain one bridged LAN, or is Wi-Fi Direct/VPN support eventually required for isolated networks?
-5. Should customer photos be automatically deleted after printing, and if so, after what period?
+3. Will the repeaters remain one bridged LAN, or is Wi-Fi Direct/VPN support eventually required for isolated networks?
+4. Should customer photos be automatically deleted after printing, and if so, after what period?
 
 ## Suggested next step
 
-Run the new square camera guide on the Samsung phone and confirm that the 2x2 review matches everything visible inside the square, while the 35x45 review keeps the same top and bottom and trims only the sides.
+Preserve Version 1.0.1 as the stable fixed-layout release. The next optional Version 1.0.2 feature is a client-order quantity selector that safely rearranges the three photo sizes while retaining the confirmed print correction, cutting gaps, and direct-print workflow.

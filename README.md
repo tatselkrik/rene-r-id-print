@@ -1,10 +1,10 @@
 # Rene'R ID Print
 
-Version 1.0.1 test candidate of the native Android app for capturing one person, producing a fixed 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
+Version 1.0.1 final release of the native Android app for capturing one person, producing a fixed 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
 
 The product requirements in `ID_Photo_Printing_Automation_Project_Context.md` remain the source of truth.
 
-## Version 1.0.1 test-candidate status
+## Version 1.0.1 release status
 
 Implemented in this milestone:
 
@@ -42,7 +42,7 @@ Android Studio, internet access during the first Gradle sync, the Samsung phone,
 
 The project uses Gradle 9.1.0, Android Gradle Plugin 9.0.1, compile SDK 36.1, min SDK 23, Compose BOM 2026.06.00, CameraX 1.6.1, the bundled ML Kit face detector 16.1.7, and bundled ML Kit selfie segmentation 16.0.0-beta6.
 
-Version 1.0.1 keeps Automatic Check, Preview, Save, and Share color-neutral. Direct printing alone applies a fixed warmer photo tone (red 106%, green 101.5%, blue 94%) for physical testing on the L15150 and RC Woven matte paper. The person mask is stored with real transparency, and every exported photo cell is explicitly filled white before the person is drawn; the white page/background and black cutting guides therefore remain neutral.
+Version 1.0.1 keeps Automatic Check, Preview, Save, and Share color-neutral. Direct printing alone applies the confirmed warmer photo tone (red 106%, green 101.5%, blue 94%) for the L15150 and RC Woven matte paper. The person mask is stored with real transparency, and every exported photo cell is explicitly filled white before the person is drawn; the white page/background and black cutting guides therefore remain neutral.
 
 ## Version 1 print workflow
 
@@ -79,9 +79,12 @@ These requirements need a decision or physical test before production use:
 
 - Country or issuing authority for any additional 35×45 mm composition rules beyond the fixed center side-crop.
 - Manual **Adjust** controls for exceptional hair, head coverings, glasses, or landmark failures.
-- Photo-paper brand, finish, weight, and matching Epson media setting.
 - Whether Wi-Fi Direct or remote printing is needed for genuinely separate networks; the current app targets the bridged home LAN.
 - Automatic photo deletion policy. Captures and temporary generated print files currently stay only in the app cache and are not uploaded. JPEGs explicitly saved by the operator go to the location they choose.
+
+## Planned Version 1.0.2
+
+The next optional feature is a client-order quantity selector. It will allow exact requested counts for 2×2-inch, 35×45 mm, and 1×1-inch photos, then safely fill remaining 5×7 paper space according to an agreed priority. Version 1.0.1 intentionally retains the proven fixed 3/3/4 layout.
 
 ## Reference PSD
 
