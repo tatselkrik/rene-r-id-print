@@ -38,6 +38,10 @@ internal object SheetCanvasRenderer {
                 ColorMatrixColorFilter(ColorMatrix(photoColorTone.colorMatrixValues()))
             }
         }
+        val photoBackgroundPaint = Paint().apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+        }
         val guidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
             style = Paint.Style.STROKE
@@ -61,6 +65,9 @@ internal object SheetCanvasRenderer {
                     cell.bounds.right * pixelsPerMmX,
                     cell.bounds.bottom * pixelsPerMmY,
                 )
+                // Fill each cell explicitly so transparent mask pixels can never
+                // be flattened to black by JPEG export or the printer pipeline.
+                canvas.drawRect(destination, photoBackgroundPaint)
                 canvas.drawBitmap(
                     bitmap,
                     crop.toBitmapRect(bitmap, review),

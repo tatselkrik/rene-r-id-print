@@ -54,8 +54,15 @@ class BackgroundWhitener : Closeable {
             confidence[index] = maskBuffer.float.coerceIn(0f, 1f)
         }
 
-        val output = requireNotNull(source.copy(Bitmap.Config.ARGB_8888, true)) {
-            "The white-background photo could not be created."
+        // Do not copy the camera JPEG's opaque bitmap flag. The processed image
+        // intentionally uses transparency outside the person so export can place
+        // it over a guaranteed white photo-cell background.
+        val output = Bitmap.createBitmap(
+            source.width,
+            source.height,
+            Bitmap.Config.ARGB_8888,
+        ).apply {
+            setHasAlpha(true)
         }
         val row = IntArray(source.width)
         val maskLeft = IntArray(source.width)
