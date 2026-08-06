@@ -54,7 +54,7 @@ Automatic positioning should use detected facial landmarks, especially the eyes,
 - Detect obvious blur with a fixed-size Laplacian sharpness score, plus insufficient resolution, poor framing, and optionally closed eyes. The current conservative blur threshold is 45 and the displayed result includes the score for future tuning.
 - Request a retake when a reliable compliant crop cannot be produced.
 - Avoid beautification, facial reshaping, or other identity-altering effects.
-- Version 1.0.1 adds optional local background whitening. It uses a soft person-confidence mask to replace the detected background with white, feathers uncertain hair and shoulder edges, and leaves the detected person unchanged. The Automatic Check screen shows the result and allows comparison with the untouched original. This is background cleanup, not beautification or facial alteration.
+- Version 1.0.1 adds optional local **White Background + Lighting** processing. It uses a soft person-confidence mask to replace the detected background with white, feather uncertain hair and shoulder edges, and apply a mild highlight-protected shadow lift to the detected person. The same gain is applied to all RGB channels so it does not intentionally introduce a new color cast. The Automatic Check screen shows the result and allows comparison with the untouched original. This is lighting/background cleanup, not beautification or facial alteration.
 
 The precise head-size and eye-position requirements still need to be defined. A 35x45 mm output size alone does not establish every passport authority's biometric composition rules.
 

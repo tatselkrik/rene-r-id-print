@@ -11,14 +11,16 @@ import java.io.Closeable
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 /**
- * Gently replaces only the detected background with white. The confidence mask
- * remains soft around hair and shoulders so the result does not look cut out.
+ * Gently replaces only the detected background with white and lifts shadows on
+ * the detected person. The confidence mask remains soft around hair and shoulders
+ * so the result does not look cut out.
  */
 class BackgroundWhitener : Closeable {
     private val segmenter: Segmenter = Segmentation.getClient(
@@ -98,10 +100,28 @@ class BackgroundWhitener : Closeable {
                 )
                 val retention = BackgroundWhiteningMath.foregroundRetention(personConfidence)
                 val pixel = row[x]
+                val red = Color.red(pixel)
+                val green = Color.green(pixel)
+                val blue = Color.blue(pixel)
+                val lighteningGain = BackgroundWhiteningMath.subjectLighteningGain(
+                    red = red,
+                    green = green,
+                    blue = blue,
+                    foregroundRetention = retention,
+                )
                 row[x] = Color.rgb(
-                    BackgroundWhiteningMath.blendWithWhite(Color.red(pixel), retention),
-                    BackgroundWhiteningMath.blendWithWhite(Color.green(pixel), retention),
-                    BackgroundWhiteningMath.blendWithWhite(Color.blue(pixel), retention),
+                    BackgroundWhiteningMath.blendWithWhite(
+                        BackgroundWhiteningMath.applyGain(red, lighteningGain),
+                        retention,
+                    ),
+                    BackgroundWhiteningMath.blendWithWhite(
+                        BackgroundWhiteningMath.applyGain(green, lighteningGain),
+                        retention,
+                    ),
+                    BackgroundWhiteningMath.blendWithWhite(
+                        BackgroundWhiteningMath.applyGain(blue, lighteningGain),
+                        retention,
+                    ),
                 )
             }
             output.setPixels(row, 0, source.width, 0, y, source.width, 1)
@@ -116,6 +136,9 @@ class BackgroundWhitener : Closeable {
 internal object BackgroundWhiteningMath {
     private const val BACKGROUND_CONFIDENCE = 0.08f
     private const val PERSON_CONFIDENCE = 0.62f
+    private const val SUBJECT_GAMMA = 0.82f
+    private const val MAX_SUBJECT_GAIN = 1.28f
+    private const val SUBJECT_LIGHTENING_STRENGTH = 0.90f
 
     /** Returns 0 for white replacement and 1 for the untouched original pixel. */
     fun foregroundRetention(personConfidence: Float): Float {
@@ -132,6 +155,35 @@ internal object BackgroundWhiteningMath {
             .roundToInt()
             .coerceIn(0, 255)
     }
+
+    /**
+     * Brightens shadows and midtones more than highlights while using one gain
+     * for all RGB channels, which avoids introducing a new color cast.
+     */
+    fun subjectLighteningGain(
+        red: Int,
+        green: Int,
+        blue: Int,
+        foregroundRetention: Float,
+    ): Float {
+        val luminance = (
+            0.2126f * red.coerceIn(0, 255) +
+                0.7152f * green.coerceIn(0, 255) +
+                0.0722f * blue.coerceIn(0, 255)
+            ) / 255f
+        if (luminance <= 0.001f || luminance >= 1f) return 1f
+
+        val targetLuminance = luminance.pow(SUBJECT_GAMMA)
+        val desiredGain = (targetLuminance / luminance).coerceAtMost(MAX_SUBJECT_GAIN)
+        val strength = SUBJECT_LIGHTENING_STRENGTH *
+            foregroundRetention.coerceIn(0f, 1f)
+        return 1f + (desiredGain - 1f) * strength
+    }
+
+    fun applyGain(channel: Int, gain: Float): Int =
+        (channel.coerceIn(0, 255) * gain.coerceAtLeast(1f))
+            .roundToInt()
+            .coerceIn(0, 255)
 }
 
 private suspend fun Segmenter.processAwait(image: InputImage): SegmentationMask =

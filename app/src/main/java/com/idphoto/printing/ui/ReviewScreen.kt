@@ -154,7 +154,7 @@ fun ReviewScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "White Background",
+                                text = "White Background + Lighting",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Ink,
@@ -162,7 +162,7 @@ fun ReviewScreen(
                             Text(
                                 text = when {
                                     whiteBackgroundAvailable && whiteBackgroundEnabled ->
-                                        "Background whitening is applied. Turn it off to compare the original."
+                                        "The background is white and subject shadows are gently lifted. Turn it off to compare the original."
                                     whiteBackgroundAvailable ->
                                         "The untouched original background is shown."
                                     else ->

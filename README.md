@@ -10,7 +10,7 @@ Implemented in this milestone:
 
 - Portrait-only guided rear-camera capture using CameraX.
 - On-device ML Kit checks for exactly one face, both eye landmarks, obvious closed eyes, and head angle.
-- Optional on-device **White Background** processing that uses a soft person mask to whiten only the background while feathering hair and shoulder edges. The Automatic Check screen can switch back to the untouched original for comparison.
+- Optional on-device **White Background + Lighting** processing that uses a soft person mask to whiten only the background, feather hair and shoulder edges, and gently lift shadows on the person while protecting highlights. The Automatic Check screen can switch back to the untouched original for comparison.
 - A square camera guide that becomes the exact 2×2 source crop.
 - A 35:45 crop that keeps the square's full height and trims only the left and right sides.
 - Resolution and camera-guide mapping checks before sheet creation.
