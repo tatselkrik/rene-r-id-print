@@ -2,7 +2,7 @@
 
 ## What Git Does
 
-Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and Version 1 is marked with the tag `v1.0.0`.
+Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and Version 1 is marked with the tag `v1.0.0`. The white-background Version 1.0.1 test candidate is developed separately and should not receive a final release tag until its phone and paper tests pass.
 
 Useful commands in Android Studio's Terminal:
 
@@ -52,7 +52,7 @@ On the first run, the helper asks you to create and confirm a signing password. 
 1. Creates the permanent signing key in `private-signing`.
 2. Builds the release app.
 3. Signs and verifies the installer.
-4. Saves it as `release\ReneR-ID-Print-v1.0.0.apk`.
+4. Reads the current version from the Android project and saves it as `release\ReneR-ID-Print-v<version>.apk`.
 
 The key and password are required for every future update. Back up the entire `private-signing` folder and record the password in a password manager or another secure location. Never send the key or password to anyone and never add them to Git.
 

@@ -54,6 +54,7 @@ Automatic positioning should use detected facial landmarks, especially the eyes,
 - Detect obvious blur with a fixed-size Laplacian sharpness score, plus insufficient resolution, poor framing, and optionally closed eyes. The current conservative blur threshold is 45 and the displayed result includes the score for future tuning.
 - Request a retake when a reliable compliant crop cannot be produced.
 - Avoid beautification, facial reshaping, or other identity-altering effects.
+- Version 1.0.1 adds optional local background whitening. It uses a soft person-confidence mask to replace the detected background with white, feathers uncertain hair and shoulder edges, and leaves the detected person unchanged. The Automatic Check screen shows the result and allows comparison with the untouched original. This is background cleanup, not beautification or facial alteration.
 
 The precise head-size and eye-position requirements still need to be defined. A 35x45 mm output size alone does not establish every passport authority's biometric composition rules.
 
@@ -94,6 +95,8 @@ The locked millimetre geometry is the source of truth. The app renders that geom
 Borderless printing is not preferred because the L15150 can enlarge the page slightly in borderless mode, changing the physical photo dimensions. The layout intentionally provides safe white margins.
 
 The corrected output was confirmed on August 5, 2026. The fixed L15150/RC Woven correction remains in normal printing, and the temporary calibration controls and calibration-sheet generator have been removed.
+
+Print color remains unchanged in the Version 1.0.1 test candidate. A warmer color correction must not be made permanent until the white-background result is physically compared on the L15150 with RC Woven matte paper.
 
 ## Printing behavior
 

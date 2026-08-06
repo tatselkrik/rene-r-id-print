@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +41,9 @@ fun ReviewScreen(
     bitmap: Bitmap?,
     review: PhotoReview?,
     isLoading: Boolean,
+    whiteBackgroundEnabled: Boolean,
+    whiteBackgroundAvailable: Boolean,
+    onWhiteBackgroundChange: (Boolean) -> Unit,
     onRetake: () -> Unit,
     onContinue: () -> Unit,
 ) {
@@ -137,6 +141,46 @@ fun ReviewScreen(
                     }
                 }
                 Spacer(Modifier.height(18.dp))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = WarmWhite,
+                    shape = RoundedCornerShape(16.dp),
+                    shadowElevation = 1.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "White Background",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Ink,
+                            )
+                            Text(
+                                text = when {
+                                    whiteBackgroundAvailable && whiteBackgroundEnabled ->
+                                        "Background whitening is applied. Turn it off to compare the original."
+                                    whiteBackgroundAvailable ->
+                                        "The untouched original background is shown."
+                                    else ->
+                                        "Background whitening was unavailable; the original is shown."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Muted,
+                            )
+                        }
+                        Spacer(Modifier.size(12.dp))
+                        Switch(
+                            checked = whiteBackgroundEnabled && whiteBackgroundAvailable,
+                            onCheckedChange = onWhiteBackgroundChange,
+                            enabled = whiteBackgroundAvailable,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
             }
 
             review?.checks?.forEach { check ->

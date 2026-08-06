@@ -1,15 +1,16 @@
 # Rene'R ID Print
 
-Version 1 native Android app for capturing one person, producing a fixed 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
+Version 1.0.1 test candidate of the native Android app for capturing one person, producing a fixed 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
 
 The product requirements in `ID_Photo_Printing_Automation_Project_Context.md` remain the source of truth.
 
-## Version 1 status
+## Version 1.0.1 test-candidate status
 
 Implemented in this milestone:
 
 - Portrait-only guided rear-camera capture using CameraX.
 - On-device ML Kit checks for exactly one face, both eye landmarks, obvious closed eyes, and head angle.
+- Optional on-device **White Background** processing that uses a soft person mask to whiten only the background while feathering hair and shoulder edges. The Automatic Check screen can switch back to the untouched original for comparison.
 - A square camera guide that becomes the exact 2×2 source crop.
 - A 35:45 crop that keeps the square's full height and trims only the left and right sides.
 - Resolution and camera-guide mapping checks before sheet creation.
@@ -39,7 +40,9 @@ Implemented in this milestone:
 
 Android Studio, internet access during the first Gradle sync, the Samsung phone, a USB data cable, and the printer are the only essentials. Kotlin, Compose, CameraX, ML Kit, Gradle, and JUnit are project dependencies; Gradle downloads them automatically. Photoshop, Python, Node.js, a database, and a cloud service are not required.
 
-The project uses Gradle 9.1.0, Android Gradle Plugin 9.0.1, compile SDK 36.1, min SDK 23, Compose BOM 2026.06.00, CameraX 1.6.1, and the bundled ML Kit face detector 16.1.7.
+The project uses Gradle 9.1.0, Android Gradle Plugin 9.0.1, compile SDK 36.1, min SDK 23, Compose BOM 2026.06.00, CameraX 1.6.1, the bundled ML Kit face detector 16.1.7, and bundled ML Kit selfie segmentation 16.0.0-beta6.
+
+Version 1.0.1 keeps print color unchanged from Version 1.0.0. Any warmer print correction will be calibrated only after the white-background result has been physically tested on the L15150 and RC Woven matte paper.
 
 ## Version 1 print workflow
 

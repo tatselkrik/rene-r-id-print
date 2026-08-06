@@ -19,6 +19,7 @@ import com.idphoto.printing.analysis.BlurDetector
 import com.idphoto.printing.analysis.PhotoAnalyzer
 import com.idphoto.printing.analysis.PhotoReview
 import com.idphoto.printing.core.ImageSize
+import com.idphoto.printing.image.BackgroundWhitener
 import com.idphoto.printing.image.BitmapLoader
 import com.idphoto.printing.ui.CapturedPhoto
 import com.idphoto.printing.ui.CaptureScreen
@@ -52,22 +53,39 @@ private enum class WorkflowScreen {
 private fun IdPhotoWorkflow() {
     val context = LocalContext.current
     val analyzer = remember { PhotoAnalyzer(context) }
+    val backgroundWhitener = remember { BackgroundWhitener() }
     var screen by remember { mutableStateOf(WorkflowScreen.CAPTURE) }
     var capturedPhoto by remember { mutableStateOf<CapturedPhoto?>(null) }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var originalBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var whiteBackgroundBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var whiteBackgroundEnabled by remember { mutableStateOf(true) }
     var review by remember { mutableStateOf<PhotoReview?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
 
-    DisposableEffect(analyzer) {
+    val activeBitmap = if (whiteBackgroundEnabled) {
+        whiteBackgroundBitmap ?: originalBitmap
+    } else {
+        originalBitmap
+    }
+
+    DisposableEffect(analyzer, backgroundWhitener) {
         onDispose {
             analyzer.close()
+            backgroundWhitener.close()
         }
     }
 
-    DisposableEffect(bitmap) {
-        val activeBitmap = bitmap
+    DisposableEffect(originalBitmap) {
+        val bitmapToRecycle = originalBitmap
         onDispose {
-            if (activeBitmap?.isRecycled == false) activeBitmap.recycle()
+            if (bitmapToRecycle?.isRecycled == false) bitmapToRecycle.recycle()
+        }
+    }
+
+    DisposableEffect(whiteBackgroundBitmap) {
+        val bitmapToRecycle = whiteBackgroundBitmap
+        onDispose {
+            if (bitmapToRecycle?.isRecycled == false) bitmapToRecycle.recycle()
         }
     }
 
@@ -76,28 +94,39 @@ private fun IdPhotoWorkflow() {
         val file = capture.file
         isAnalyzing = true
         review = null
-        bitmap = null
+        originalBitmap = null
+        whiteBackgroundBitmap = null
+        whiteBackgroundEnabled = true
         try {
             val analyzed = analyzer.analyze(Uri.fromFile(file), capture.cameraSquare)
             val loaded = withContext(Dispatchers.IO) { BitmapLoader.load(file) }
-            bitmap = loaded
-            review = analyzed.withDecodedBitmapChecks(loaded)
+            originalBitmap = loaded
+            val checkedReview = analyzed.withDecodedBitmapChecks(loaded)
+            review = checkedReview
+            if (checkedReview.cropPlan != null) {
+                whiteBackgroundBitmap = backgroundWhitener.whiten(loaded)
+            }
         } catch (error: Exception) {
-            review = PhotoReview(
-                imageSize = ImageSize(0, 0),
-                cropPlan = null,
-                checks = emptyList(),
-                readyToPrint = false,
-                failureMessage = error.message ?: "The captured photo could not be prepared.",
-            )
+            if (originalBitmap == null || review == null) {
+                review = PhotoReview(
+                    imageSize = ImageSize(0, 0),
+                    cropPlan = null,
+                    checks = emptyList(),
+                    readyToPrint = false,
+                    failureMessage = error.message ?: "The captured photo could not be prepared.",
+                )
+            }
         } finally {
             isAnalyzing = false
         }
     }
 
     fun retake() {
-        bitmap?.recycle()
-        bitmap = null
+        originalBitmap?.recycle()
+        originalBitmap = null
+        whiteBackgroundBitmap?.recycle()
+        whiteBackgroundBitmap = null
+        whiteBackgroundEnabled = true
         review = null
         capturedPhoto?.file?.delete()
         capturedPhoto = null
@@ -124,14 +153,17 @@ private fun IdPhotoWorkflow() {
             },
         )
         WorkflowScreen.REVIEW -> ReviewScreen(
-            bitmap = bitmap,
+            bitmap = activeBitmap,
             review = review,
             isLoading = isAnalyzing,
+            whiteBackgroundEnabled = whiteBackgroundEnabled,
+            whiteBackgroundAvailable = whiteBackgroundBitmap != null,
+            onWhiteBackgroundChange = { whiteBackgroundEnabled = it },
             onRetake = ::retake,
             onContinue = { screen = WorkflowScreen.PREVIEW },
         )
         WorkflowScreen.PREVIEW -> SheetPreviewScreen(
-            bitmap = requireNotNull(bitmap),
+            bitmap = requireNotNull(activeBitmap),
             review = requireNotNull(review),
             onBack = { screen = WorkflowScreen.REVIEW },
         )
