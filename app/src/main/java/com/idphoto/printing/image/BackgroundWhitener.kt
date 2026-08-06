@@ -109,19 +109,11 @@ class BackgroundWhitener : Closeable {
                     blue = blue,
                     foregroundRetention = retention,
                 )
-                row[x] = Color.rgb(
-                    BackgroundWhiteningMath.blendWithWhite(
-                        BackgroundWhiteningMath.applyGain(red, lighteningGain),
-                        retention,
-                    ),
-                    BackgroundWhiteningMath.blendWithWhite(
-                        BackgroundWhiteningMath.applyGain(green, lighteningGain),
-                        retention,
-                    ),
-                    BackgroundWhiteningMath.blendWithWhite(
-                        BackgroundWhiteningMath.applyGain(blue, lighteningGain),
-                        retention,
-                    ),
+                row[x] = Color.argb(
+                    BackgroundWhiteningMath.foregroundAlpha(retention),
+                    BackgroundWhiteningMath.applyGain(red, lighteningGain),
+                    BackgroundWhiteningMath.applyGain(green, lighteningGain),
+                    BackgroundWhiteningMath.applyGain(blue, lighteningGain),
                 )
             }
             output.setPixels(row, 0, source.width, 0, y, source.width, 1)
@@ -149,12 +141,8 @@ internal object BackgroundWhiteningMath {
         return normalized * normalized * (3f - 2f * normalized)
     }
 
-    fun blendWithWhite(channel: Int, foregroundRetention: Float): Int {
-        val retained = foregroundRetention.coerceIn(0f, 1f)
-        return (255f - (255 - channel.coerceIn(0, 255)) * retained)
-            .roundToInt()
-            .coerceIn(0, 255)
-    }
+    fun foregroundAlpha(foregroundRetention: Float): Int =
+        (255f * foregroundRetention.coerceIn(0f, 1f)).roundToInt()
 
     /**
      * Brightens shadows and midtones more than highlights while using one gain

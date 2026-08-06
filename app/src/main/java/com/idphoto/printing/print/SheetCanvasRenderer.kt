@@ -3,6 +3,8 @@ package com.idphoto.printing.print
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
@@ -22,13 +24,20 @@ internal object SheetCanvasRenderer {
         bitmap: Bitmap,
         review: PhotoReview,
         printScale: PrintScale,
+        photoColorTone: PhotoColorTone,
     ) {
         val cropPlan = requireNotNull(review.cropPlan) { "A valid crop plan is required." }
         val pixelsPerMmX = width / SheetLayout.PAPER_WIDTH_MM
         val pixelsPerMmY = height / SheetLayout.PAPER_HEIGHT_MM
         val photoPaint = Paint(
             Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG,
-        )
+        ).apply {
+            colorFilter = if (photoColorTone == PhotoColorTone.NEUTRAL) {
+                null
+            } else {
+                ColorMatrixColorFilter(ColorMatrix(photoColorTone.colorMatrixValues()))
+            }
+        }
         val guidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
             style = Paint.Style.STROKE

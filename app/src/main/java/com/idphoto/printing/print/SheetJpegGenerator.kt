@@ -18,6 +18,7 @@ object SheetJpegGenerator {
         bitmap: Bitmap,
         review: PhotoReview,
         printScale: PrintScale = PrintScale.IDENTITY,
+        photoColorTone: PhotoColorTone = PhotoColorTone.NEUTRAL,
     ): File {
         outputFile.parentFile?.mkdirs()
         val sheet = Bitmap.createBitmap(WIDTH_PIXELS, HEIGHT_PIXELS, Bitmap.Config.ARGB_8888)
@@ -29,6 +30,7 @@ object SheetJpegGenerator {
                 bitmap = bitmap,
                 review = review,
                 printScale = printScale,
+                photoColorTone = photoColorTone,
             )
             outputFile.outputStream().buffered().use { stream ->
                 if (!sheet.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)) {

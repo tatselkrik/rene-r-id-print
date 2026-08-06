@@ -46,6 +46,7 @@ import com.idphoto.printing.core.PrintScale
 import com.idphoto.printing.core.SheetLayout
 import com.idphoto.printing.print.DirectIppPrinter
 import com.idphoto.printing.print.DirectPrinterSettings
+import com.idphoto.printing.print.PhotoColorTone
 import com.idphoto.printing.print.SheetJpegActions
 import com.idphoto.printing.print.SheetJpegGenerator
 import java.io.File
@@ -79,12 +80,14 @@ fun SheetPreviewScreen(
     suspend fun prepareJpeg(
         fileName: String = "id-photo-5x7-share.jpg",
         printScale: PrintScale = PrintScale.IDENTITY,
+        photoColorTone: PhotoColorTone = PhotoColorTone.NEUTRAL,
     ): File = withContext(Dispatchers.IO) {
         SheetJpegGenerator.generate(
             outputFile = File(context.cacheDir, "print/$fileName"),
             bitmap = bitmap,
             review = review,
             printScale = printScale,
+            photoColorTone = photoColorTone,
         )
     }
 
@@ -264,6 +267,7 @@ fun SheetPreviewScreen(
                                 val jpeg = prepareJpeg(
                                     fileName = "id-photo-5x7-direct.jpg",
                                     printScale = PrintScale.L15150_RC_WOVEN_MATTE,
+                                    photoColorTone = PhotoColorTone.DIRECT_PRINT_WARM,
                                 )
                                 DirectIppPrinter.printJpeg(
                                     profile = printer,

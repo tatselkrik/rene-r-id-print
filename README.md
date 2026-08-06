@@ -42,7 +42,7 @@ Android Studio, internet access during the first Gradle sync, the Samsung phone,
 
 The project uses Gradle 9.1.0, Android Gradle Plugin 9.0.1, compile SDK 36.1, min SDK 23, Compose BOM 2026.06.00, CameraX 1.6.1, the bundled ML Kit face detector 16.1.7, and bundled ML Kit selfie segmentation 16.0.0-beta6.
 
-Version 1.0.1 keeps print color unchanged from Version 1.0.0. Any warmer print correction will be calibrated only after the white-background result has been physically tested on the L15150 and RC Woven matte paper.
+Version 1.0.1 keeps Automatic Check, Preview, Save, and Share color-neutral. Direct printing alone applies a fixed warmer photo tone (red 106%, green 101.5%, blue 94%) for physical testing on the L15150 and RC Woven matte paper. The white page background and black cutting guides are drawn separately and remain neutral.
 
 ## Version 1 print workflow
 

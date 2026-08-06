@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.IntOffset
@@ -23,6 +24,7 @@ fun PhotoCrop(
 ) {
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
     Canvas(modifier) {
+        drawRect(Color.White)
         val scaleX = bitmap.width.toFloat() / originalSize.width.coerceAtLeast(1)
         val scaleY = bitmap.height.toFloat() / originalSize.height.coerceAtLeast(1)
         val left = (crop.left * scaleX).roundToInt().coerceIn(0, bitmap.width - 1)
@@ -40,4 +42,3 @@ fun PhotoCrop(
         )
     }
 }
-

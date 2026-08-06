@@ -10,24 +10,24 @@ class BackgroundWhitenerTest {
         val retention = BackgroundWhiteningMath.foregroundRetention(0f)
 
         assertEquals(0f, retention, 0.0001f)
-        assertEquals(255, BackgroundWhiteningMath.blendWithWhite(40, retention))
+        assertEquals(0, BackgroundWhiteningMath.foregroundAlpha(retention))
     }
 
     @Test
-    fun definitePersonKeepsOriginalColor() {
+    fun definitePersonRemainsFullyOpaque() {
         val retention = BackgroundWhiteningMath.foregroundRetention(1f)
 
         assertEquals(1f, retention, 0.0001f)
-        assertEquals(73, BackgroundWhiteningMath.blendWithWhite(73, retention))
+        assertEquals(255, BackgroundWhiteningMath.foregroundAlpha(retention))
     }
 
     @Test
     fun uncertainEdgesAreFeathered() {
         val retention = BackgroundWhiteningMath.foregroundRetention(0.35f)
-        val blended = BackgroundWhiteningMath.blendWithWhite(80, retention)
+        val alpha = BackgroundWhiteningMath.foregroundAlpha(retention)
 
         assertTrue(retention > 0f && retention < 1f)
-        assertTrue(blended > 80 && blended < 255)
+        assertTrue(alpha in 1..254)
     }
 
     @Test

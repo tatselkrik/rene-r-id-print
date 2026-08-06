@@ -96,7 +96,7 @@ Borderless printing is not preferred because the L15150 can enlarge the page sli
 
 The corrected output was confirmed on August 5, 2026. The fixed L15150/RC Woven correction remains in normal printing, and the temporary calibration controls and calibration-sheet generator have been removed.
 
-Print color remains unchanged in the Version 1.0.1 test candidate. A warmer color correction must not be made permanent until the white-background result is physically compared on the L15150 with RC Woven matte paper.
+Automatic Check, Preview, Save, and Share remain color-neutral in the Version 1.0.1 test candidate. Direct printing alone applies a fixed warmer tone to the photo subject (red 106 percent, green 101.5 percent, blue 94 percent). The transparent person mask keeps the pure-white page/background and black cutting guides outside this color treatment. This candidate correction must be physically evaluated on the L15150 with RC Woven matte paper before final release.
 
 ## Printing behavior
 
