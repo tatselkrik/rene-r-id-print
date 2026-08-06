@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.idphoto.printing.analysis.PhotoReview
 import com.idphoto.printing.core.PhotoKind
 import com.idphoto.printing.core.PrintScale
+import com.idphoto.printing.core.SheetCombination
 import com.idphoto.printing.core.SheetLayout
 import com.idphoto.printing.print.DirectIppPrinter
 import com.idphoto.printing.print.DirectPrinterSettings
@@ -61,6 +62,7 @@ import kotlinx.coroutines.withContext
 fun SheetPreviewScreen(
     bitmap: Bitmap,
     review: PhotoReview,
+    combination: SheetCombination,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -68,7 +70,7 @@ fun SheetPreviewScreen(
     val directPrinter = remember {
         DirectPrinterSettings.load(context)?.takeIf { it.readyForDirectPrint }
     }
-    var pendingSaveFile by remember(bitmap, review) { mutableStateOf<File?>(null) }
+    var pendingSaveFile by remember(bitmap, review, combination) { mutableStateOf<File?>(null) }
     var isExporting by remember { mutableStateOf(false) }
     var exportMessage by remember { mutableStateOf<String?>(null) }
     var exportFailed by remember { mutableStateOf(false) }
@@ -86,6 +88,7 @@ fun SheetPreviewScreen(
             outputFile = File(context.cacheDir, "print/$fileName"),
             bitmap = bitmap,
             review = review,
+            combination = combination,
             printScale = printScale,
             photoColorTone = photoColorTone,
         )
@@ -142,6 +145,7 @@ fun SheetPreviewScreen(
         SheetPreview(
             bitmap = bitmap,
             review = review,
+            combination = combination,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
@@ -153,11 +157,24 @@ fun SheetPreviewScreen(
                 .padding(top = 12.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.Center,
         ) {
-            CountPill("3", "2 × 2 in")
-            Spacer(Modifier.size(8.dp))
-            CountPill("3", "35 × 45 mm")
-            Spacer(Modifier.size(8.dp))
-            CountPill("4", "1 × 1 in")
+            if (combination.largeCount > 0) {
+                CountPill(combination.largeCount.toString(), "2 × 2")
+            }
+            if (combination.largeCount > 0 && combination.passportCount > 0) {
+                Spacer(Modifier.size(8.dp))
+            }
+            if (combination.passportCount > 0) {
+                CountPill(combination.passportCount.toString(), "Passport")
+            }
+            if (
+                combination.smallCount > 0 &&
+                (combination.largeCount > 0 || combination.passportCount > 0)
+            ) {
+                Spacer(Modifier.size(8.dp))
+            }
+            if (combination.smallCount > 0) {
+                CountPill(combination.smallCount.toString(), "1 × 1")
+            }
         }
 
         exportMessage?.let {
@@ -298,6 +315,7 @@ fun SheetPreviewScreen(
 fun SheetPreview(
     bitmap: Bitmap,
     review: PhotoReview,
+    combination: SheetCombination,
     modifier: Modifier = Modifier,
 ) {
     val cropPlan = requireNotNull(review.cropPlan)
@@ -324,7 +342,7 @@ fun SheetPreview(
                     SheetLayout.PAPER_WIDTH_MM,
                 ),
             )
-            SheetLayout.cells.forEach { cell ->
+            SheetLayout.cellsFor(combination).forEach { cell ->
                 val crop = when (cell.kind) {
                     PhotoKind.LARGE_SQUARE,
                     PhotoKind.SMALL_SQUARE -> cropPlan.square

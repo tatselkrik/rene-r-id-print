@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import androidx.exifinterface.media.ExifInterface
 import com.idphoto.printing.analysis.PhotoReview
 import com.idphoto.printing.core.PrintScale
+import com.idphoto.printing.core.SheetCombination
 import java.io.File
 import java.io.IOException
 
@@ -17,6 +18,7 @@ object SheetJpegGenerator {
         outputFile: File,
         bitmap: Bitmap,
         review: PhotoReview,
+        combination: SheetCombination = SheetCombination.DEFAULT,
         printScale: PrintScale = PrintScale.IDENTITY,
         photoColorTone: PhotoColorTone = PhotoColorTone.NEUTRAL,
     ): File {
@@ -29,6 +31,7 @@ object SheetJpegGenerator {
                 height = HEIGHT_PIXELS.toFloat(),
                 bitmap = bitmap,
                 review = review,
+                combination = combination,
                 printScale = printScale,
                 photoColorTone = photoColorTone,
             )

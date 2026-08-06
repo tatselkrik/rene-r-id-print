@@ -14,10 +14,7 @@ This document is the current source of truth for the project unless the user cha
 - Paper source: Cassette 1, permanently reserved for this workflow.
 - Paper stock: RC Woven matte photo paper. Direct jobs should request the printer's matte photographic media type.
 - Input: one newly captured photograph of one person.
-- Every printed sheet must contain exactly:
-  - Three 2x2-inch square photos
-  - Three 35x45 mm passport-size photos
-  - Four 1x1-inch square photos
+- Version 1.0.2 lets the operator choose one of eight approved maximum-use combinations. Every nonzero quantity is even: 6/0/0, 4/2/4, 4/0/8, 2/6/0, 2/4/6, 2/2/8, 0/8/4, or 0/6/8 for 2x2-inch / Passport / 1x1-inch photos.
 - The app must create the complete sheet automatically. The operator should not have to crop, resize, duplicate, or arrange the pictures manually.
 
 ## Intended user experience
@@ -33,7 +30,7 @@ The normal workflow should be:
 7. The operator taps **Print**.
 8. The job is sent to the Epson L15150 using saved print settings.
 
-The main experience should be only: **Take Photo → Automatic Check → Preview → Print**.
+The main experience should be only: **Take Photo → Automatic Check → Choose Combination → Preview → Print**.
 
 A secondary **Adjust** option may be provided for unusual hairstyles, head coverings, glasses, or failed face detection, but routine photos should require no manual adjustment.
 
@@ -58,24 +55,20 @@ Automatic positioning should use detected facial landmarks, especially the eyes,
 
 The precise head-size and eye-position requirements still need to be defined. A 35x45 mm output size alone does not establish every passport authority's biometric composition rules.
 
-## Fixed 5x7 sheet layout
+## Selectable 5x7 sheet layouts
 
-The ten images fit on a portrait 5x7-inch sheet in three vertical columns:
+Version 1.0.1 preserves the original fixed 3/3/4 sheet. Version 1.0.2 replaces it with eight approved maximum-use even-number presets:
 
-- Left column: three 2x2-inch photos
-- Middle column: three upright 35x45 mm photos
-- Right column: four 1x1-inch photos
+- 6 / 0 / 0
+- 4 / 2 / 4 (default)
+- 4 / 0 / 8
+- 2 / 6 / 0
+- 2 / 4 / 6
+- 2 / 2 / 8
+- 0 / 8 / 4
+- 0 / 6 / 8
 
-Recommended starting geometry:
-
-- 2 mm vertical cutting gaps within each column
-- 3 mm gaps between columns
-- Total occupied width: 117.2 mm
-- Approximate side margins on a 127 mm-wide sheet: 4.9 mm each
-- Tallest column height: 156.4 mm
-- Approximate top and bottom margins on a 177.8 mm-high sheet: 10.7 mm each
-
-The preview should show the complete sheet, individual cut boundaries, and the exact number of copies. Crop marks may be placed in the gaps, without reducing the required finished dimensions.
+Each preset stores exact millimetre coordinates. Horizontally separated cells retain at least 3 mm, vertically separated cells retain at least 2 mm, and every preset remains inside the page after the confirmed print-size correction. The same chosen geometry drives Preview, Save, Share, and Print.
 
 ## Print-file requirements
 
@@ -121,7 +114,7 @@ Direct printing uses the saved unicast address (`10.0.0.44`), so the phone may b
 - Native Android application, preferably Kotlin.
 - Guided camera capture with a square that exactly defines the 2x2 crop, plus on-device face and landmark checks.
 - A deterministic 35:45 center crop that keeps the square's full height and trims only its left and right sides.
-- One locked layout template for the first version.
+- Eight locked, tested layout templates selected from a simple combination screen.
 - Direct 600 dpi JPEG generation from the shared millimetre geometry for preview export and the L15150's direct IPPS service.
 - Local processing where practical so customer ID photos are not uploaded unnecessarily.
 - Remember the selected L15150 and print configuration after initial setup.
@@ -133,7 +126,7 @@ The first usable prototype succeeds when it can:
 - Capture a clear photograph on the Samsung phone.
 - Detect and check the one face framed by the operator inside the camera square.
 - Preserve that square exactly for 2x2 and produce the 35:45 crop by trimming only its left and right sides.
-- Generate exactly 3 large square, 3 passport-size, and 4 small square copies.
+- Generate exactly the copy counts in the selected maximum-use even combination.
 - Display an accurate portrait 5x7 preview.
 - Print on the L15150 without uncontrolled printing-app scaling.
 - Produce cut photos that measure within the agreed physical tolerance using the confirmed built-in correction.
@@ -148,4 +141,4 @@ The first usable prototype succeeds when it can:
 
 ## Suggested next step
 
-Preserve Version 1.0.1 as the stable fixed-layout release. The next optional Version 1.0.2 feature is a client-order quantity selector that safely rearranges the three photo sizes while retaining the confirmed print correction, cutting gaps, and direct-print workflow.
+Test all eight Version 1.0.2 combinations on the connected Samsung phone. Confirm selector readability, exact preview counts, Back navigation, Save/Share output, and at least one direct paper print before finalizing the release.

@@ -14,32 +14,34 @@ class PrintScaleTest {
     @Test
     fun `maximum correction keeps the sheet inside the page`() {
         val scale = PrintScale(PrintScale.MAX_SCALE, PrintScale.MAX_SCALE)
-        SheetLayout.cells.forEach { cell ->
-            val scaledLeft = scaleCoordinate(
-                value = cell.bounds.left,
-                center = SheetLayout.PAPER_WIDTH_MM / 2f,
-                scale = scale.x,
-            )
-            val scaledRight = scaleCoordinate(
-                value = cell.bounds.right,
-                center = SheetLayout.PAPER_WIDTH_MM / 2f,
-                scale = scale.x,
-            )
-            val scaledTop = scaleCoordinate(
-                value = cell.bounds.top,
-                center = SheetLayout.PAPER_HEIGHT_MM / 2f,
-                scale = scale.y,
-            )
-            val scaledBottom = scaleCoordinate(
-                value = cell.bounds.bottom,
-                center = SheetLayout.PAPER_HEIGHT_MM / 2f,
-                scale = scale.y,
-            )
+        SheetLayout.combinations.forEach { combination ->
+            SheetLayout.cellsFor(combination).forEach { cell ->
+                val scaledLeft = scaleCoordinate(
+                    value = cell.bounds.left,
+                    center = SheetLayout.PAPER_WIDTH_MM / 2f,
+                    scale = scale.x,
+                )
+                val scaledRight = scaleCoordinate(
+                    value = cell.bounds.right,
+                    center = SheetLayout.PAPER_WIDTH_MM / 2f,
+                    scale = scale.x,
+                )
+                val scaledTop = scaleCoordinate(
+                    value = cell.bounds.top,
+                    center = SheetLayout.PAPER_HEIGHT_MM / 2f,
+                    scale = scale.y,
+                )
+                val scaledBottom = scaleCoordinate(
+                    value = cell.bounds.bottom,
+                    center = SheetLayout.PAPER_HEIGHT_MM / 2f,
+                    scale = scale.y,
+                )
 
-            assertTrue(scaledLeft >= 0f)
-            assertTrue(scaledTop >= 0f)
-            assertTrue(scaledRight <= SheetLayout.PAPER_WIDTH_MM)
-            assertTrue(scaledBottom <= SheetLayout.PAPER_HEIGHT_MM)
+                assertTrue(scaledLeft >= 0f)
+                assertTrue(scaledTop >= 0f)
+                assertTrue(scaledRight <= SheetLayout.PAPER_WIDTH_MM)
+                assertTrue(scaledBottom <= SheetLayout.PAPER_HEIGHT_MM)
+            }
         }
     }
 

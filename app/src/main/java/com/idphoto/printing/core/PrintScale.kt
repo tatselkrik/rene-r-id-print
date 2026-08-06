@@ -11,8 +11,8 @@ data class PrintScale(
 
     companion object {
         const val MIN_SCALE = 0.9f
-        // Larger values would push the three-column sheet beyond the 5 x 7 page.
-        const val MAX_SCALE = 1.075f
+        // Larger values would push the densest selectable layout beyond the 5 x 7 page.
+        const val MAX_SCALE = 1.06f
         val IDENTITY = PrintScale()
 
         // Fixed L15150 / RC Woven matte correction averaged from the repeatable

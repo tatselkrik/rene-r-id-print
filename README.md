@@ -1,10 +1,10 @@
 # Rene'R ID Print
 
-Version 1.0.1 final release of the native Android app for capturing one person, producing a fixed 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
+Version 1.0.2 test candidate of the native Android app for capturing one person, choosing one of eight maximum-use even-number combinations, producing a 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi. Version 1.0.1 remains the finalized stable release until this candidate passes phone and paper testing.
 
 The product requirements in `ID_Photo_Printing_Automation_Project_Context.md` remain the source of truth.
 
-## Version 1.0.1 release status
+## Version 1.0.2 test-candidate status
 
 Implemented in this milestone:
 
@@ -14,10 +14,7 @@ Implemented in this milestone:
 - A square camera guide that becomes the exact 2×2 source crop.
 - A 35:45 crop that keeps the square's full height and trims only the left and right sides.
 - Resolution and camera-guide mapping checks before sheet creation.
-- One locked millimetre-based layout containing exactly:
-  - 3 × 2×2-inch photos
-  - 3 × 35×45 mm photos
-  - 4 × 1×1-inch photos
+- A **Choose Combination** screen with eight tested millimetre-based layouts. Every nonzero quantity is even, and the default is 4 × 2×2-inch, 2 × 35×45 mm, and 4 × 1×1-inch photos.
 - Short black corner cutting guides instead of full borders around each photo.
 - A portrait 5×7 preview driven by the same geometry as the print generator.
 - A directly rendered 3000×4200 JPEG with 600 dpi metadata (exactly 5×7 inches).
@@ -42,11 +39,11 @@ Android Studio, internet access during the first Gradle sync, the Samsung phone,
 
 The project uses Gradle 9.1.0, Android Gradle Plugin 9.0.1, compile SDK 36.1, min SDK 23, Compose BOM 2026.06.00, CameraX 1.6.1, the bundled ML Kit face detector 16.1.7, and bundled ML Kit selfie segmentation 16.0.0-beta6.
 
-Version 1.0.1 keeps Automatic Check, Preview, Save, and Share color-neutral. Direct printing alone applies the confirmed warmer photo tone (red 106%, green 101.5%, blue 94%) for the L15150 and RC Woven matte paper. The person mask is stored with real transparency, and every exported photo cell is explicitly filled white before the person is drawn; the white page/background and black cutting guides therefore remain neutral.
+Version 1.0.2 retains Version 1.0.1's color behavior: Automatic Check, Preview, Save, and Share remain color-neutral, while direct printing applies the confirmed warmer photo tone (red 106%, green 101.5%, blue 94%) for the L15150 and RC Woven matte paper. The person mask is stored with real transparency, and every exported photo cell is explicitly filled white before the person is drawn; the white page/background and black cutting guides therefore remain neutral.
 
 ## Version 1 print workflow
 
-After one-time setup, **Print** on the preview renders the locked millimetre layout directly to a 3000x4200 JPEG and sends it to the saved L15150. There is no separate print-setup page or printing app. Direct printing requests:
+After one-time setup, the operator chooses a combination, and **Print** on the preview renders that exact millimetre layout directly to a 3000x4200 JPEG and sends it to the saved L15150. There is no separate print-setup page or printing app. Direct printing requests:
 
 - 5×7-inch portrait photo paper
 - Exact 5:7 image proportions at 600 dpi
@@ -61,17 +58,22 @@ The layout includes safe white margins. Because the direct JPEG has the same exa
 
 The phone and printer do not need the same Wi-Fi name or the same repeater. Direct printing works across repeater hops when all repeaters operate as bridges/access points on one LAN and the phone can reach the printer's saved address (`10.0.0.44`). Automatic discovery may fail when repeaters block multicast, but the saved manual IP can still work. Use access-point/bridge mode, disable guest/client/privacy isolation, and reserve the printer's IP address in the main router so it does not change.
 
-## Geometry
+## Selectable geometry
 
-All layout coordinates are stored in millimetres in `SheetLayout.kt` and converted to screen units or JPEG pixels only at rendering time.
+All layout coordinates are stored in millimetres in `SheetLayout.kt` and converted to screen units or JPEG pixels only at rendering time. Version 1.0.2 offers these maximum-use even combinations:
 
-| Column | Copies | Finished size | Vertical gap |
-| --- | ---: | --- | ---: |
-| Left | 3 | 50.8 × 50.8 mm | 2 mm |
-| Middle | 3 | 35 × 45 mm | 2 mm |
-| Right | 4 | 25.4 × 25.4 mm | 2 mm |
+| 2×2 | Passport | 1×1 |
+| ---: | ---: | ---: |
+| 6 | 0 | 0 |
+| 4 | 2 | 4 |
+| 4 | 0 | 8 |
+| 2 | 6 | 0 |
+| 2 | 4 | 6 |
+| 2 | 2 | 8 |
+| 0 | 8 | 4 |
+| 0 | 6 | 8 |
 
-Column gaps are 3 mm. Occupied width is 117.2 mm, leaving 4.9 mm side margins on 127 mm paper. The tallest column is 156.4 mm, leaving approximately 10.7 mm at the top and bottom.
+Every photo keeps its exact finished dimensions. Horizontally separated photos retain at least 3 mm and vertically separated photos retain at least 2 mm. Every preset stays inside the 5×7 page after the confirmed L15150/RC Woven print-size correction.
 
 ## Deliberately unresolved
 
@@ -82,9 +84,9 @@ These requirements need a decision or physical test before production use:
 - Whether Wi-Fi Direct or remote printing is needed for genuinely separate networks; the current app targets the bridged home LAN.
 - Automatic photo deletion policy. Captures and temporary generated print files currently stay only in the app cache and are not uploaded. JPEGs explicitly saved by the operator go to the location they choose.
 
-## Planned Version 1.0.2
+## Version 1.0.2 testing
 
-The next optional feature is a client-order quantity selector. It will allow exact requested counts for 2×2-inch, 35×45 mm, and 1×1-inch photos, then safely fill remaining 5×7 paper space according to an agreed priority. Version 1.0.1 intentionally retains the proven fixed 3/3/4 layout.
+The selector, preview, save/share output, and direct print output must be checked on the Samsung phone before the candidate is merged into `main`, tagged, signed, and finalized as Version 1.0.2. Version 1.0.1 remains available under the `v1.0.1` Git tag.
 
 ## Reference PSD
 

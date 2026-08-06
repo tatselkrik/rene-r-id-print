@@ -6,74 +6,131 @@ import org.junit.Test
 
 class SheetLayoutTest {
     @Test
-    fun `layout contains exactly the required copies`() {
-        assertEquals(3, SheetLayout.cells.count { it.kind == PhotoKind.LARGE_SQUARE })
-        assertEquals(3, SheetLayout.cells.count { it.kind == PhotoKind.PASSPORT_35X45 })
-        assertEquals(4, SheetLayout.cells.count { it.kind == PhotoKind.SMALL_SQUARE })
-        assertEquals(10, SheetLayout.cells.size)
+    fun `selector contains the eight approved maximum-use even combinations`() {
+        val actual = SheetLayout.combinations.map {
+            Triple(it.largeCount, it.passportCount, it.smallCount)
+        }
+
+        assertEquals(
+            listOf(
+                Triple(6, 0, 0),
+                Triple(4, 2, 4),
+                Triple(4, 0, 8),
+                Triple(2, 6, 0),
+                Triple(2, 4, 6),
+                Triple(2, 2, 8),
+                Triple(0, 8, 4),
+                Triple(0, 6, 8),
+            ),
+            actual,
+        )
     }
 
     @Test
-    fun `all photos fit inside portrait five by seven sheet`() {
-        assertTrue(SheetLayout.PAPER_HEIGHT_MM > SheetLayout.PAPER_WIDTH_MM)
-        SheetLayout.cells.forEach { cell ->
-            assertTrue(cell.bounds.left >= 0f)
-            assertTrue(cell.bounds.top >= 0f)
-            assertTrue(cell.bounds.right <= SheetLayout.PAPER_WIDTH_MM)
-            assertTrue(cell.bounds.bottom <= SheetLayout.PAPER_HEIGHT_MM)
+    fun `four two four is the default combination`() {
+        assertEquals(
+            Triple(4, 2, 4),
+            Triple(
+                SheetCombination.DEFAULT.largeCount,
+                SheetCombination.DEFAULT.passportCount,
+                SheetCombination.DEFAULT.smallCount,
+            ),
+        )
+    }
+
+    @Test
+    fun `every combination contains its advertised copies`() {
+        SheetLayout.combinations.forEach { combination ->
+            val cells = SheetLayout.cellsFor(combination)
+            assertEquals(
+                combination.largeCount,
+                cells.count { it.kind == PhotoKind.LARGE_SQUARE },
+            )
+            assertEquals(
+                combination.passportCount,
+                cells.count { it.kind == PhotoKind.PASSPORT_35X45 },
+            )
+            assertEquals(
+                combination.smallCount,
+                cells.count { it.kind == PhotoKind.SMALL_SQUARE },
+            )
+            assertEquals(combination.totalCount, cells.size)
         }
     }
 
     @Test
-    fun `finished photo dimensions remain exact`() {
-        SheetLayout.cells.forEach { cell ->
-            when (cell.kind) {
-                PhotoKind.LARGE_SQUARE -> {
-                    assertEquals(50.8f, cell.bounds.width, 0.001f)
-                    assertEquals(50.8f, cell.bounds.height, 0.001f)
-                }
-                PhotoKind.PASSPORT_35X45 -> {
-                    assertEquals(35f, cell.bounds.width, 0.001f)
-                    assertEquals(45f, cell.bounds.height, 0.001f)
-                }
-                PhotoKind.SMALL_SQUARE -> {
-                    assertEquals(25.4f, cell.bounds.width, 0.001f)
-                    assertEquals(25.4f, cell.bounds.height, 0.001f)
+    fun `all selectable quantities are zero or positive even numbers`() {
+        SheetLayout.combinations.forEach { combination ->
+            listOf(
+                combination.largeCount,
+                combination.passportCount,
+                combination.smallCount,
+            ).forEach { count ->
+                assertTrue(count == 0 || count >= 2)
+                assertEquals(0, count % 2)
+            }
+            assertTrue(combination.largeCount <= 6)
+            assertTrue(combination.passportCount <= 8)
+            assertTrue(combination.smallCount <= 8)
+        }
+    }
+
+    @Test
+    fun `all photos fit inside the portrait five by seven sheet`() {
+        assertTrue(SheetLayout.PAPER_HEIGHT_MM > SheetLayout.PAPER_WIDTH_MM)
+        SheetLayout.combinations.forEach { combination ->
+            SheetLayout.cellsFor(combination).forEach { cell ->
+                assertTrue(cell.bounds.left >= 0f)
+                assertTrue(cell.bounds.top >= 0f)
+                assertTrue(cell.bounds.right <= SheetLayout.PAPER_WIDTH_MM)
+                assertTrue(cell.bounds.bottom <= SheetLayout.PAPER_HEIGHT_MM)
+            }
+        }
+    }
+
+    @Test
+    fun `finished photo dimensions remain exact in every combination`() {
+        SheetLayout.combinations.forEach { combination ->
+            SheetLayout.cellsFor(combination).forEach { cell ->
+                when (cell.kind) {
+                    PhotoKind.LARGE_SQUARE -> {
+                        assertEquals(50.8f, cell.bounds.width, 0.001f)
+                        assertEquals(50.8f, cell.bounds.height, 0.001f)
+                    }
+                    PhotoKind.PASSPORT_35X45 -> {
+                        assertEquals(35f, cell.bounds.width, 0.001f)
+                        assertEquals(45f, cell.bounds.height, 0.001f)
+                    }
+                    PhotoKind.SMALL_SQUARE -> {
+                        assertEquals(25.4f, cell.bounds.width, 0.001f)
+                        assertEquals(25.4f, cell.bounds.height, 0.001f)
+                    }
                 }
             }
         }
     }
 
     @Test
-    fun `column and cutting gaps match the specification`() {
-        val large = SheetLayout.cells.filter { it.kind == PhotoKind.LARGE_SQUARE }
-        val passport = SheetLayout.cells.filter { it.kind == PhotoKind.PASSPORT_35X45 }
-        val small = SheetLayout.cells.filter { it.kind == PhotoKind.SMALL_SQUARE }
-
-        assertEquals(SheetLayout.SIDE_MARGIN_MM, large.first().bounds.left, 0.001f)
-        assertEquals(
-            SheetLayout.COLUMN_GAP_MM,
-            passport.first().bounds.left - large.first().bounds.right,
-            0.001f,
-        )
-        assertEquals(
-            SheetLayout.COLUMN_GAP_MM,
-            small.first().bounds.left - passport.first().bounds.right,
-            0.001f,
-        )
-        assertEquals(
-            SheetLayout.SIDE_MARGIN_MM,
-            SheetLayout.PAPER_WIDTH_MM - small.first().bounds.right,
-            0.001f,
-        )
-
-        listOf(large, passport, small).forEach { column ->
-            column.zipWithNext().forEach { (upper, lower) ->
-                assertEquals(
-                    SheetLayout.CUT_GAP_MM,
-                    lower.bounds.top - upper.bounds.bottom,
-                    0.001f,
-                )
+    fun `every pair of photos retains a cutting gap`() {
+        SheetLayout.combinations.forEach { combination ->
+            val cells = SheetLayout.cellsFor(combination)
+            cells.forEachIndexed { index, first ->
+                cells.drop(index + 1).forEach { second ->
+                    val separated =
+                        first.bounds.right + SheetLayout.COLUMN_GAP_MM <=
+                            second.bounds.left + TOLERANCE ||
+                            second.bounds.right + SheetLayout.COLUMN_GAP_MM <=
+                            first.bounds.left + TOLERANCE ||
+                            first.bounds.bottom + SheetLayout.CUT_GAP_MM <=
+                            second.bounds.top + TOLERANCE ||
+                            second.bounds.bottom + SheetLayout.CUT_GAP_MM <=
+                            first.bounds.top + TOLERANCE
+                    assertTrue(
+                        "${combination.name} contains cells without the required cutting gap: " +
+                            "${first.bounds} and ${second.bounds}",
+                        separated,
+                    )
+                }
             }
         }
     }
@@ -91,5 +148,9 @@ class SheetLayoutTest {
         assertTrue(SheetLayout.CUT_GUIDE_LENGTH_MM > 0f)
         assertTrue(SheetLayout.CUT_GUIDE_STROKE_MM > 0f)
         assertTrue(SheetLayout.CUT_GUIDE_LENGTH_MM < SheetLayout.SMALL_MM / 2f)
+    }
+
+    private companion object {
+        const val TOLERANCE = 0.01f
     }
 }

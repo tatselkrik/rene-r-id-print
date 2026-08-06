@@ -19,10 +19,12 @@ import com.idphoto.printing.analysis.BlurDetector
 import com.idphoto.printing.analysis.PhotoAnalyzer
 import com.idphoto.printing.analysis.PhotoReview
 import com.idphoto.printing.core.ImageSize
+import com.idphoto.printing.core.SheetCombination
 import com.idphoto.printing.image.BackgroundWhitener
 import com.idphoto.printing.image.BitmapLoader
 import com.idphoto.printing.ui.CapturedPhoto
 import com.idphoto.printing.ui.CaptureScreen
+import com.idphoto.printing.ui.CombinationScreen
 import com.idphoto.printing.ui.IdPhotoTheme
 import com.idphoto.printing.ui.PrinterSetupScreen
 import com.idphoto.printing.ui.ReviewScreen
@@ -45,6 +47,7 @@ class MainActivity : ComponentActivity() {
 private enum class WorkflowScreen {
     CAPTURE,
     REVIEW,
+    COMBINATION,
     PREVIEW,
     PRINTER_SETUP,
 }
@@ -61,6 +64,7 @@ private fun IdPhotoWorkflow() {
     var whiteBackgroundEnabled by remember { mutableStateOf(true) }
     var review by remember { mutableStateOf<PhotoReview?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
+    var selectedCombination by remember { mutableStateOf(SheetCombination.DEFAULT) }
 
     val activeBitmap = if (whiteBackgroundEnabled) {
         whiteBackgroundBitmap ?: originalBitmap
@@ -137,7 +141,8 @@ private fun IdPhotoWorkflow() {
         when (screen) {
             WorkflowScreen.CAPTURE -> Unit
             WorkflowScreen.REVIEW -> retake()
-            WorkflowScreen.PREVIEW -> screen = WorkflowScreen.REVIEW
+            WorkflowScreen.COMBINATION -> screen = WorkflowScreen.REVIEW
+            WorkflowScreen.PREVIEW -> screen = WorkflowScreen.COMBINATION
             WorkflowScreen.PRINTER_SETUP -> screen = WorkflowScreen.CAPTURE
         }
     }
@@ -160,12 +165,19 @@ private fun IdPhotoWorkflow() {
             whiteBackgroundAvailable = whiteBackgroundBitmap != null,
             onWhiteBackgroundChange = { whiteBackgroundEnabled = it },
             onRetake = ::retake,
-            onContinue = { screen = WorkflowScreen.PREVIEW },
+            onContinue = { screen = WorkflowScreen.COMBINATION },
+        )
+        WorkflowScreen.COMBINATION -> CombinationScreen(
+            selectedCombination = selectedCombination,
+            onCombinationSelected = { selectedCombination = it },
+            onBack = { screen = WorkflowScreen.REVIEW },
+            onPreview = { screen = WorkflowScreen.PREVIEW },
         )
         WorkflowScreen.PREVIEW -> SheetPreviewScreen(
             bitmap = requireNotNull(activeBitmap),
             review = requireNotNull(review),
-            onBack = { screen = WorkflowScreen.REVIEW },
+            combination = selectedCombination,
+            onBack = { screen = WorkflowScreen.COMBINATION },
         )
         WorkflowScreen.PRINTER_SETUP -> PrinterSetupScreen(
             onBack = { screen = WorkflowScreen.CAPTURE },

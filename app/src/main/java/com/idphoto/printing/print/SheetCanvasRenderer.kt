@@ -12,6 +12,7 @@ import com.idphoto.printing.analysis.PhotoReview
 import com.idphoto.printing.core.FloatRect
 import com.idphoto.printing.core.PhotoKind
 import com.idphoto.printing.core.PrintScale
+import com.idphoto.printing.core.SheetCombination
 import com.idphoto.printing.core.SheetLayout
 import kotlin.math.roundToInt
 
@@ -23,6 +24,7 @@ internal object SheetCanvasRenderer {
         height: Float,
         bitmap: Bitmap,
         review: PhotoReview,
+        combination: SheetCombination,
         printScale: PrintScale,
         photoColorTone: PhotoColorTone,
     ) {
@@ -53,7 +55,7 @@ internal object SheetCanvasRenderer {
         canvas.save()
         try {
             canvas.scale(printScale.x, printScale.y, width / 2f, height / 2f)
-            SheetLayout.cells.forEach { cell ->
+            SheetLayout.cellsFor(combination).forEach { cell ->
                 val crop = when (cell.kind) {
                     PhotoKind.LARGE_SQUARE,
                     PhotoKind.SMALL_SQUARE -> cropPlan.square

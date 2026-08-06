@@ -18,10 +18,10 @@ git tag
 
 ## Adding a Feature Later
 
-Start new work on a separate branch so Version 1 remains safe:
+Start new work on a separate branch so the stable release remains safe. Version 1.0.2 is currently tested on `codex/v1.0.2-combination-selector`:
 
 ```powershell
-git switch -c feature/custom-preview-layouts
+git switch -c codex/v1.0.2-combination-selector
 ```
 
 After the feature has been tested:
@@ -30,7 +30,7 @@ After the feature has been tested:
 git add -A
 git commit -m "Add selectable preview layouts"
 git switch main
-git merge feature/custom-preview-layouts
+git merge codex/v1.0.2-combination-selector
 ```
 
 For that feature release, set Android's `versionName` to `1.0.2`, increase `versionCode` to `3`, build the installer with the same signing key, and add the Git tag `v1.0.2`.

@@ -242,7 +242,7 @@ fun ReviewScreen(
                 enabled = review?.cropPlan != null && bitmap != null && !isLoading,
                 modifier = Modifier.weight(1f),
             ) {
-                Text("Preview")
+                Text("Choose Sheet")
             }
         }
     }
