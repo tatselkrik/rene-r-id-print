@@ -24,6 +24,33 @@ Implemented in this milestone:
 - The confirmed L15150/RC Woven print-size correction is built into normal printing; the temporary calibration screen has been removed.
 - Unit tests for copy count, physical dimensions, page bounds, exact square framing, and the passport side crop.
 
+## App walkthrough
+
+The normal workflow is guided capture, automatic checking, combination selection, and print-ready output.
+
+<table>
+  <tr>
+    <th>Take Photo</th>
+    <th>Automatic Check</th>
+    <th>Choose Combination</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/take-photo.jpg" alt="Guided Take Photo screen" width="280"></td>
+    <td><img src="docs/images/automatic-check.gif" alt="Automatic Check workflow" width="280"></td>
+    <td><img src="docs/images/layout.gif" alt="Maximum-use layout selector" width="280"></td>
+  </tr>
+  <tr>
+    <th>Printer Setup</th>
+    <th>Save</th>
+    <th>Share</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/printer-setup.jpg" alt="Direct Printer Setup screen" width="280"></td>
+    <td><img src="docs/images/save.jpg" alt="Saving the generated JPEG" width="280"></td>
+    <td><img src="docs/images/share.jpg" alt="Sharing the generated sheet" width="280"></td>
+  </tr>
+</table>
+
 ## Run it
 
 1. Install the latest stable Android Studio from the official Android Developers website. Use the recommended Windows `.exe` installer and the **Standard** setup.
@@ -87,7 +114,3 @@ These requirements need a decision or physical test before production use:
 ## Version 1.0.2 finalization
 
 The selector and all eight layouts passed automated geometry, copy-count, cutting-gap, corrected-page-bound, build, lint, APK-signature, installation, and connected-phone checks. The approved release is merged into `main` and marked by the `v1.0.2` Git tag. Version 1.0.1 remains available under the `v1.0.1` tag.
-
-## Reference PSD
-
-`image placement.psd` is retained as historical input only. Its flattened canvas is 2100×1500 pixels (landscape), it does not match the confirmed 3/3/4 portrait layout, and it contains rotated copies. It must not be used as print geometry.
