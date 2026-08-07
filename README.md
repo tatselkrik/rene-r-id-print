@@ -1,8 +1,6 @@
 # Rene'R ID Print
 
-Version 1.0.2 final release of the native Android app for capturing one person, choosing one of eight maximum-use even-number combinations, producing a 5×7-inch ID-photo sheet, previewing it accurately, and printing directly to an Epson EcoTank L15150 over local Wi-Fi.
-
-The product requirements in `ID_Photo_Printing_Automation_Project_Context.md` remain the source of truth.
+Rene'R ID Print is a custom Android app built specifically for Rene'R's in-house ID-photo service. It guides the operator through capturing one person, choosing one of eight maximum-use, even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos, and producing an accurately sized 5×7-inch sheet. The finished sheet can be previewed, saved, shared, or printed directly to an Epson EcoTank L15150 over local Wi-Fi. The app is privately distributed for this business and is not available on Google Play.
 
 ## Version 1.0.2 release status
 
@@ -114,3 +112,24 @@ These requirements need a decision or physical test before production use:
 ## Version 1.0.2 finalization
 
 The selector and all eight layouts passed automated geometry, copy-count, cutting-gap, corrected-page-bound, build, lint, APK-signature, installation, and connected-phone checks. The approved release is merged into `main` and marked by the `v1.0.2` Git tag. Version 1.0.1 remains available under the `v1.0.1` tag.
+
+## Version history
+
+### Version 1.0.2 — Flexible sheet combinations
+
+- Added eight maximum-use layouts with even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos.
+- Added the **Choose Combination** screen and kept every photo at its exact printed dimensions.
+- Retained Version 1.0.1's white-background, lighting, and print-warmth behavior.
+
+### Version 1.0.1 — Photo finishing
+
+- Added optional on-device **White Background + Lighting** processing.
+- Added gentle subject-shadow lifting while protecting highlights and soft hair and shoulder edges.
+- Added the warmer color treatment for direct printing without changing Automatic Check, Preview, Save, or Share.
+- Fixed exported sheets so processed photo backgrounds remain white instead of turning black.
+
+### Version 1.0.0 — Initial release
+
+- Introduced guided rear-camera capture, automatic face checks, exact ID-photo crops, and the original fixed 5×7-inch layout.
+- Added accurate previewing, JPEG saving and sharing, printer discovery, and direct Wi-Fi printing to the Epson EcoTank L15150.
+- Added the Rene'R ID Print name, business icon, signed Android installer, and private distribution workflow.
