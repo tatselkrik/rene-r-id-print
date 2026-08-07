@@ -79,10 +79,6 @@ After one-time setup, the operator chooses a combination, and **Print** on the p
 
 The layout includes safe white margins. Because the direct JPEG has the same exact 5:7 aspect ratio as the paper, the printer's fill setting does not distort the layout. A fixed correction of approximately 106.0% horizontally and 105.9% vertically is coded for the L15150 with RC Woven matte paper from the repeatable measurements received so far.
 
-## Home network
-
-The phone and printer do not need the same Wi-Fi name or the same repeater. Direct printing works across repeater hops when all repeaters operate as bridges/access points on one LAN and the phone can reach the printer's saved address (`10.0.0.44`). Automatic discovery may fail when repeaters block multicast, but the saved manual IP can still work. Use access-point/bridge mode, disable guest/client/privacy isolation, and reserve the printer's IP address in the main router so it does not change.
-
 ## Selectable geometry
 
 All layout coordinates are stored in millimetres in `SheetLayout.kt` and converted to screen units or JPEG pixels only at rendering time. Version 1.0.2 offers these maximum-use even combinations:
