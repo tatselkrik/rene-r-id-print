@@ -1,5 +1,7 @@
 # Rene'R ID Print
 
+[![Android quality checks](https://github.com/tatselkrik/rene-r-id-print/actions/workflows/android-quality.yml/badge.svg)](https://github.com/tatselkrik/rene-r-id-print/actions/workflows/android-quality.yml)
+
 Rene'R ID Print is a custom Android app built specifically for Rene'R's in-house ID-photo service. It guides the operator through capturing one person, choosing one of eight maximum-use, even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos, and producing an accurately sized 5×7-inch sheet. The finished sheet can be previewed, saved, shared, or printed directly to an Epson EcoTank L15150 over local Wi-Fi. The app is privately distributed for this business and is not available on Google Play.
 
 ## Version 1.0.2 release status
