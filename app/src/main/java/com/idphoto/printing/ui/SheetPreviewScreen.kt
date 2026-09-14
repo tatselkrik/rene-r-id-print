@@ -2,6 +2,7 @@ package com.idphoto.printing.ui
 
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -46,7 +47,8 @@ import com.idphoto.printing.core.PrintScale
 import com.idphoto.printing.core.SheetCombination
 import com.idphoto.printing.core.SheetLayout
 import com.idphoto.printing.print.DirectIppPrinter
-import com.idphoto.printing.print.DirectPrinterSettings
+import com.idphoto.printing.print.PrinterConnection
+import com.idphoto.printing.print.PrinterConnectionState
 import com.idphoto.printing.print.PhotoColorTone
 import com.idphoto.printing.print.SheetJpegActions
 import com.idphoto.printing.print.SheetJpegGenerator
@@ -55,11 +57,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
 fun SheetPreviewScreen(
+    printerConnection: PrinterConnection,
+    printerState: PrinterConnectionState,
     bitmap: Bitmap,
     review: PhotoReview,
     combination: SheetCombination,
@@ -67,9 +72,6 @@ fun SheetPreviewScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val directPrinter = remember {
-        DirectPrinterSettings.load(context)?.takeIf { it.readyForDirectPrint }
-    }
     var pendingSaveFile by remember(bitmap, review, combination) { mutableStateOf<File?>(null) }
     var isExporting by remember { mutableStateOf(false) }
     var exportMessage by remember { mutableStateOf<String?>(null) }
@@ -78,6 +80,9 @@ fun SheetPreviewScreen(
     var printMessage by remember { mutableStateOf<String?>(null) }
     var printFailed by remember { mutableStateOf(false) }
     val isBusy = isExporting || isPrinting
+    val photoReady = review.readyFor(combination)
+    // System Back must respect the same busy state as the on-screen Back button.
+    BackHandler(enabled = isBusy) { }
 
     suspend fun prepareJpeg(
         fileName: String = "id-photo-5x7-share.jpg",
@@ -177,6 +182,18 @@ fun SheetPreviewScreen(
             }
         }
 
+        Text(
+            text = if (!photoReady) {
+                "Photo checks failed for this layout. Go back to review or retake."
+            } else {
+                printerState.message
+            },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+            color = if (photoReady) Muted else MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+        )
+
         exportMessage?.let {
             Text(
                 text = it,
@@ -227,7 +244,7 @@ fun SheetPreviewScreen(
                         }
                     }
                 },
-                enabled = !isBusy && review.cropPlan != null,
+                enabled = !isBusy && photoReady,
                 modifier = Modifier.weight(1f),
             ) {
                 Text(if (isExporting) "Preparing…" else "Save")
@@ -250,7 +267,7 @@ fun SheetPreviewScreen(
                         }
                     }
                 },
-                enabled = !isBusy && review.cropPlan != null,
+                enabled = !isBusy && photoReady,
                 modifier = Modifier.weight(1f),
             ) {
                 Text("Share")
@@ -270,16 +287,14 @@ fun SheetPreviewScreen(
             }
             Button(
                 onClick = {
-                    val printer = directPrinter
-                    if (printer == null) {
-                        printFailed = true
-                        printMessage = "No direct printer is ready. Return to the camera and open Printer Setup."
-                        return@Button
-                    }
                     scope.launch {
                         isPrinting = true
                         printMessage = null
                         try {
+                            // Recover from a printer powered on after the startup check.
+                            if (printerConnection.state.value.profile == null) printerConnection.refresh()
+                            val printer = printerConnection.state.value.profile
+                                ?: error(printerConnection.state.value.message)
                             val result = withContext(Dispatchers.IO) {
                                 val jpeg = prepareJpeg(
                                     fileName = "id-photo-5x7-direct.jpg",
@@ -294,6 +309,8 @@ fun SheetPreviewScreen(
                             }
                             printFailed = false
                             printMessage = result.message
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
                         } catch (error: Exception) {
                             printFailed = true
                             printMessage = error.message ?: "Direct printing failed."
@@ -302,7 +319,7 @@ fun SheetPreviewScreen(
                         }
                     }
                 },
-                enabled = review.readyToPrint && !isBusy,
+                enabled = photoReady && !isBusy && !printerState.checking,
                 modifier = Modifier.weight(1f),
             ) {
                 Text(if (isPrinting) "Printing…" else "Print")

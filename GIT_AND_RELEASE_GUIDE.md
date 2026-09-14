@@ -2,7 +2,7 @@
 
 ## What Git Does
 
-Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and the finalized selectable-layout release is marked with the tag `v1.0.2`. Version 1.0.1 remains preserved under `v1.0.1`.
+Git preserves named snapshots of the source code. It works locally and does not require an account or internet connection. The stable version lives on the `main` branch, and the approved current release is `v1.0.3`. Earlier version tags remain preserved.
 
 Useful commands in Android Studio's Terminal:
 
@@ -33,7 +33,7 @@ git switch main
 git merge codex/short-feature-name
 ```
 
-For the next release, choose the new `versionName`, increase `versionCode` above `3`, build the installer with the same signing key, and add a matching Git tag only after testing passes.
+For the next release, choose the new `versionName`, increase `versionCode` above `4`, build the installer with the same signing key, and add a matching Git tag only after testing passes.
 
 ## Local Git Versus Backup
 
@@ -41,19 +41,28 @@ Local Git protects against accidental code changes, but it is still stored on th
 
 ## Creating the Signed Installer
 
-Run this command in Android Studio's Terminal:
+From v1.0.3, signing is automatic on the configured Windows account. Run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\create-signed-installer.ps1
 ```
 
-On the first run, the helper asks you to create and confirm a signing password. The password is hidden while you type it. The helper then:
+To sign the already verified release build without rebuilding:
 
-1. Creates the permanent signing key in `private-signing`.
-2. Builds the release app.
-3. Signs and verifies the installer.
-4. Reads the current version from the Android project and saves it as `release\ReneR-ID-Print-v<version>.apk`.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\create-signed-installer.ps1 -UsePreparedApk
+```
 
-The key and password are required for every future update. Back up the entire `private-signing` folder and record the password in a password manager or another secure location. Never send the key or password to anyone and never add them to Git.
+The helper reads the generated password from Windows DPAPI-protected local storage, signs with the permanent automatic key, and verifies the APK's signature and identity. No password prompt is required. It checks the APK version, package, and non-debuggable status. Prepared mode also checks the recorded unsigned APK hash.
 
-The current Android Studio development copy uses a different signature. Uninstall that development copy before installing the first signed Version 1 APK. This clears the saved printer connection once. Later signed versions will update Version 1 normally when they use the same key and a higher `versionCode`.
+The private key and encrypted credential are under the ignored `private-signing/automatic-v1` directory. Its permissions restrict access to the Windows owner and SYSTEM. Never commit these files or include them in a release. The encrypted credential is bound to this Windows account and installation; copying the folder alone to a different PC is not a portable recovery method. Preserve a secure system backup and deliberately migrate signing before replacing Windows or the account.
+
+Missing or inaccessible signing files cause a failure, never a silent key replacement. `-InitializeAutomaticSigning` is only for an explicitly authorized first setup and refuses to overwrite existing signing state. Normal releases must not use it.
+
+### Signing identity change in v1.0.3
+
+Kirk explicitly authorized a new signing identity because the old password was unavailable. The original key and v1.0.0–v1.0.2 APKs remain preserved. Version 1.0.3 requires uninstalling the old signed app before installation; this clears its private settings and cache. Save any photos that need to be kept before uninstalling. The new app will discover and pair with the printer again.
+
+Later releases must keep the v1.0.3 automatic key, allowing normal updates without uninstalling. Keep the application identifier `com.idphoto.printing` unchanged. The helper verifies the pinned automatic certificate and compares it with previous releases from v1.0.3 onward.
+
+Phone approval is still required before committing, tagging, pushing, or uploading a release APK.

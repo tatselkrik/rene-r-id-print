@@ -22,6 +22,7 @@ object SheetJpegGenerator {
         printScale: PrintScale = PrintScale.IDENTITY,
         photoColorTone: PhotoColorTone = PhotoColorTone.NEUTRAL,
     ): File {
+        require(review.readyFor(combination)) { "The photo checks must pass for the selected layout." }
         outputFile.parentFile?.mkdirs()
         val sheet = Bitmap.createBitmap(WIDTH_PIXELS, HEIGHT_PIXELS, Bitmap.Config.ARGB_8888)
         try {

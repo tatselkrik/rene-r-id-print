@@ -12,6 +12,10 @@ import com.idphoto.printing.core.CropPlan
 import com.idphoto.printing.core.CropPlanner
 import com.idphoto.printing.core.FloatRect
 import com.idphoto.printing.core.ImageSize
+import com.idphoto.printing.core.ImagePoint
+import com.idphoto.printing.core.FaceCropFit
+import com.idphoto.printing.core.SheetCombination
+import kotlinx.coroutines.CancellationException
 import java.io.Closeable
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -35,7 +39,11 @@ data class PhotoReview(
     val checks: List<ReviewCheck>,
     val readyToPrint: Boolean,
     val failureMessage: String? = null,
-)
+    val passportFaceFits: Boolean = false,
+) {
+    fun readyFor(combination: SheetCombination): Boolean =
+        readyToPrint && (combination.passportCount == 0 || passportFaceFits)
+}
 
 class PhotoAnalyzer(context: Context) : Closeable {
     private val appContext = context.applicationContext
@@ -52,6 +60,8 @@ class PhotoAnalyzer(context: Context) : Closeable {
             val image = InputImage.fromFilePath(appContext, uri)
             val faces = detector.processAwait(image)
             buildReview(image, faces, cameraSquare)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Exception) {
             PhotoReview(
                 imageSize = ImageSize(0, 0),
@@ -83,6 +93,13 @@ class PhotoAnalyzer(context: Context) : Closeable {
         val eyesOpen = singleFace?.let(::eyesAppearOpen) ?: false
         val framingReliable = cropPlan?.framingReliable == true
         val resolutionSufficient = cropPlan?.resolutionSufficient == true
+        val faceBounds = singleFace?.boundingBox?.let {
+            FloatRect(it.left.toFloat(), it.top.toFloat(), it.right.toFloat(), it.bottom.toFloat())
+        }
+        val leftPoint = leftEye?.let { ImagePoint(it.x, it.y) }
+        val rightPoint = rightEye?.let { ImagePoint(it.x, it.y) }
+        val squareFaceFits = FaceCropFit.fits(cropPlan.square, faceBounds, leftPoint, rightPoint)
+        val passportFaceFits = FaceCropFit.fits(cropPlan.passport, faceBounds, leftPoint, rightPoint)
 
         val checks = listOf(
             ReviewCheck(
@@ -131,6 +148,24 @@ class PhotoAnalyzer(context: Context) : Closeable {
                 },
             ),
             ReviewCheck(
+                label = "Face inside square",
+                status = passFail(squareFaceFits),
+                detail = if (squareFaceFits) {
+                    "The detected face and both eyes fit inside the square crop."
+                } else {
+                    "The face is outside or clipped by the square. Center the person and retake."
+                },
+            ),
+            ReviewCheck(
+                label = "Face inside passport crop",
+                status = passFail(passportFaceFits),
+                detail = if (passportFaceFits) {
+                    "The detected face and both eyes fit inside the narrower passport crop."
+                } else {
+                    "Center the person and retake for passport photos, or choose a square-only layout."
+                },
+            ),
+            ReviewCheck(
                 label = "Print resolution",
                 status = passFail(resolutionSufficient),
                 detail = if (resolutionSufficient) {
@@ -151,7 +186,8 @@ class PhotoAnalyzer(context: Context) : Closeable {
             cropPlan = cropPlan,
             checks = checks,
             readyToPrint = exactlyOneFace && eyesFound && eyesOpen && poseAcceptable &&
-                framingReliable && resolutionSufficient,
+                framingReliable && resolutionSufficient && squareFaceFits,
+            passportFaceFits = passportFaceFits,
         )
     }
 

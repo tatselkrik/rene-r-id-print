@@ -107,7 +107,7 @@ The app codes the average correction from these measurements: approximately 106.
 
 ### Home repeater network
 
-Direct printing uses the saved unicast address (`10.0.0.44`), so the phone may be attached to a different repeater or SSID when every repeater bridges into the same LAN. Discovery multicast may not cross every repeater hop. Repeater router/NAT mode, guest networks, privacy/client isolation, or a changed DHCP address can prevent printing. Prefer access-point/bridge mode, disable isolation, and reserve the printer address on the main router. Genuinely separate networks require routing/VPN or a remote-print service; the current app intentionally implements local-LAN IPPS only.
+Direct printing uses the saved local printer address, so the phone may be attached to a different repeater or SSID when every repeater bridges into the same LAN. Discovery multicast may not cross every repeater hop. Repeater router/NAT mode, guest networks, privacy/client isolation, or a changed DHCP address can prevent printing. Prefer access-point/bridge mode, disable isolation, and reserve the printer address on the main router. Genuinely separate networks require routing/VPN or a remote-print service; the current app intentionally implements local-LAN IPPS only.
 
 ## Recommended implementation direction
 

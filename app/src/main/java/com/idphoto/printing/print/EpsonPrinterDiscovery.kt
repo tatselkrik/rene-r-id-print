@@ -39,13 +39,16 @@ object EpsonPrinterDiscovery {
                 acquire()
             }
             val executor = ContextCompat.getMainExecutor(appContext)
-            var fallback: NsdServiceInfo? = null
+            val handler = android.os.Handler(appContext.mainLooper)
+            val candidates = mutableMapOf<String, NsdServiceInfo>()
             var discoveryActive = false
             var resolving = false
 
             lateinit var listener: NsdManager.DiscoveryListener
+            var pendingTimeout: Runnable? = null
 
             fun releaseResources() {
+                pendingTimeout?.let(handler::removeCallbacks)
                 if (discoveryActive) {
                     runCatching { nsdManager.stopServiceDiscovery(listener) }
                     discoveryActive = false
@@ -66,78 +69,90 @@ object EpsonPrinterDiscovery {
                     runCatching { nsdManager.stopServiceDiscovery(listener) }
                     discoveryActive = false
                 }
-                nsdManager.resolveService(
-                    service,
-                    object : NsdManager.ResolveListener {
-                        override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                            fail("The printer was found, but its Wi-Fi address could not be read (code $errorCode).")
-                        }
-
-                        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                            val host = serviceInfo.host?.hostAddress
-                            if (host.isNullOrBlank()) {
-                                fail("The printer was found, but it did not provide a Wi-Fi address.")
-                                return
+                try {
+                    nsdManager.resolveService(
+                        service,
+                        object : NsdManager.ResolveListener {
+                            override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                                executor.execute {
+                                    fail("The printer was found, but its Wi-Fi address could not be read (code $errorCode).")
+                                }
                             }
-                            val path = serviceInfo.attributes["rp"]
-                                ?.toString(Charsets.UTF_8)
-                                ?.trim()
-                                ?.trimStart('/')
-                                ?.takeIf(String::isNotBlank)
-                                ?.let { "/$it" }
-                                ?: DirectPrinterProfile.DEFAULT_IPP_PATH
-                            releaseResources()
-                            if (continuation.isActive) {
-                                continuation.resume(
-                                    DiscoveredPrinter(
-                                        serviceName = serviceInfo.serviceName,
-                                        host = host,
-                                        port = serviceInfo.port.takeIf { it > 0 }
-                                            ?: DirectPrinterProfile.DEFAULT_IPP_PORT,
-                                        resourcePath = path,
-                                    ),
-                                )
-                            }
-                        }
-                    },
-                )
-            }
 
-            val timeout = Runnable {
-                val candidate = fallback
-                if (candidate == null) {
-                    fail("No IPP printer was found. Check Wi-Fi, or enter the printer IP address manually.")
-                } else {
-                    resolve(candidate)
+                            override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+                                executor.execute resolved@{
+                                    if (!continuation.isActive) return@resolved
+                                    val host = serviceInfo.host?.hostAddress
+                                    if (host.isNullOrBlank()) {
+                                        fail("The printer was found, but it did not provide a Wi-Fi address.")
+                                        return@resolved
+                                    }
+                                    val path = serviceInfo.attributes["rp"]
+                                        ?.toString(Charsets.UTF_8)
+                                        ?.trim()
+                                        ?.trimStart('/')
+                                        ?.takeIf(String::isNotBlank)
+                                        ?.let { "/$it" }
+                                        ?: DirectPrinterProfile.DEFAULT_IPP_PATH
+                                    releaseResources()
+                                    continuation.resume(
+                                        DiscoveredPrinter(
+                                            serviceName = serviceInfo.serviceName,
+                                            host = host,
+                                            port = serviceInfo.port.takeIf { it > 0 }
+                                                ?: DirectPrinterProfile.DEFAULT_IPP_PORT,
+                                            resourcePath = path,
+                                        ),
+                                    )
+                                }
+                            }
+                        },
+                    )
+                } catch (error: Exception) {
+                    fail("The printer address could not be resolved.", error)
                 }
             }
 
+            val timeout = Runnable {
+                when (candidates.size) {
+                    0 -> fail("Printer unavailable. Check that the L15150 is on and your phone is on the same Wi-Fi.")
+                    1 -> resolve(candidates.values.single())
+                    else -> fail("Several L15150 printers were found. Choose yours by address in Printer Setup.")
+                }
+            }
+            pendingTimeout = timeout
+
             listener = object : NsdManager.DiscoveryListener {
                 override fun onDiscoveryStarted(serviceType: String) {
-                    discoveryActive = true
+                    executor.execute {
+                        discoveryActive = true
+                        if (!continuation.isActive) releaseResources()
+                    }
                 }
 
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                     if (!serviceInfo.serviceType.contains("_ipp._tcp", ignoreCase = true)) return
-                    if (fallback == null) fallback = serviceInfo
-                    val name = serviceInfo.serviceName.lowercase()
-                    if ("epson" in name || "l15150" in name) {
-                        resolve(serviceInfo)
+                    executor.execute {
+                        if (continuation.isActive && isL15150Printer("", serviceInfo.serviceName)) {
+                            candidates[serviceInfo.serviceName] = serviceInfo
+                        }
                     }
                 }
 
-                override fun onServiceLost(serviceInfo: NsdServiceInfo) = Unit
+                override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                    executor.execute { candidates.remove(serviceInfo.serviceName) }
+                }
 
                 override fun onDiscoveryStopped(serviceType: String) {
-                    discoveryActive = false
+                    executor.execute { discoveryActive = false }
                 }
 
                 override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-                    fail("Printer search could not start (code $errorCode).")
+                    executor.execute { fail("Printer search could not start (code $errorCode).") }
                 }
 
                 override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
-                    discoveryActive = false
+                    executor.execute { discoveryActive = false }
                 }
             }
 
@@ -145,11 +160,10 @@ object EpsonPrinterDiscovery {
                 executor.execute { releaseResources() }
             }
             executor.execute {
+                if (!continuation.isActive) return@execute
                 try {
                     nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener)
-                    executor.execute {
-                        android.os.Handler(appContext.mainLooper).postDelayed(timeout, SEARCH_TIMEOUT_MS)
-                    }
+                    handler.postDelayed(timeout, SEARCH_TIMEOUT_MS)
                 } catch (error: Exception) {
                     fail("Printer search could not start.", error)
                 }

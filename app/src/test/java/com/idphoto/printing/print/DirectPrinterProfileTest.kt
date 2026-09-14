@@ -6,6 +6,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DirectPrinterProfileTest {
+    @org.junit.Test
+    fun `plaintext and unpinned connections can never print`() {
+        org.junit.Assert.assertFalse(DirectPrinterProfile("printer.test", useTls = false).readyForDirectPrint)
+        org.junit.Assert.assertFalse(DirectPrinterProfile("printer.test").readyForDirectPrint)
+        org.junit.Assert.assertTrue(DirectPrinterProfile("printer.test", certificateSha256 = "pin").readyForDirectPrint)
+    }
+
+    @org.junit.Test
+    fun `printer model must match L15150 exactly`() {
+        org.junit.Assert.assertTrue(isL15150Printer("EPSON L15150 Series", "Office"))
+        org.junit.Assert.assertTrue(isL15150Printer("", "EPSON L15150 Series"))
+        org.junit.Assert.assertFalse(isL15150Printer("EPSON L15160", "Office"))
+        org.junit.Assert.assertFalse(isL15150Printer("", "Some other printer"))
+        org.junit.Assert.assertFalse(isL15150Printer("EPSON L151500", "Office"))
+    }
     @Test
     fun `direct profile defaults to cassette one and matte photo media`() {
         val profile = DirectPrinterProfile(host = "192.168.1.25")

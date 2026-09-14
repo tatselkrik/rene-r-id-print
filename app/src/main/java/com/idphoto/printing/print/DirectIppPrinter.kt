@@ -42,7 +42,7 @@ data class DirectPrinterProfile(
     val addressLabel: String
         get() = if (port == DEFAULT_IPP_PORT) host else "$host:$port"
     val readyForDirectPrint: Boolean
-        get() = (!useTls || !certificateSha256.isNullOrBlank()) &&
+        get() = useTls && !certificateSha256.isNullOrBlank() &&
             supportsJpeg &&
             reportedFiveBySeven
 
@@ -137,23 +137,27 @@ object DirectIppPrinter {
         "/ipp/port1",
     )
 
-    fun probe(address: String): DirectPrinterProfile {
+    fun probe(
+        address: String,
+        expectedCertificate: String? = null,
+        tryStandardPaths: Boolean = true,
+    ): DirectPrinterProfile {
         val parsed = PrinterAddress.parse(address)
-        val paths = listOfNotNull(parsed.path).plus(standardPaths).distinct()
+        val paths = if (tryStandardPaths) {
+            listOfNotNull(parsed.path).plus(standardPaths).distinct()
+        } else {
+            listOf(parsed.path ?: DirectPrinterProfile.DEFAULT_IPP_PATH)
+        }
         var lastError: Exception? = null
-        val candidates = paths.flatMap { path ->
-            listOf(
-                PrinterEndpoint(parsed.host, parsed.port, path, useTls = true),
-                PrinterEndpoint(parsed.host, parsed.port, path, useTls = false),
-            )
+        val candidates = paths.map { path ->
+            PrinterEndpoint(parsed.host, parsed.port, path, useTls = true)
         }
         candidates.forEach { candidate ->
             try {
-                val endpoint = if (candidate.useTls) {
-                    candidate.copy(certificateSha256 = fetchCertificateFingerprint(candidate))
-                } else {
-                    candidate
-                }
+                // Background reconnection must never replace a saved certificate.
+                val endpoint = candidate.copy(
+                    certificateSha256 = expectedCertificate ?: fetchCertificateFingerprint(candidate),
+                )
                 val request = IppPacket.getPrinterAttributes(
                     endpoint.ippUri,
                     Types.printerName,
@@ -170,6 +174,10 @@ object DirectIppPrinter {
                 val name = response.getString(Tag.printerAttributes, Types.printerName)
                     ?: response.getString(Tag.printerAttributes, Types.printerMakeAndModel)
                     ?: "Epson printer"
+                val model = response.getString(Tag.printerAttributes, Types.printerMakeAndModel).orEmpty()
+                if (!isL15150Printer(model, name)) {
+                    throw IOException("This app requires an Epson L15150 printer.")
+                }
                 val formats = response.getStrings(Tag.printerAttributes, Types.documentFormatSupported)
                 val media = response.getStrings(Tag.printerAttributes, Types.mediaSupported)
                 val mediaSources = response.getStrings(Tag.printerAttributes, Types.mediaSourceSupported)
@@ -186,10 +194,10 @@ object DirectIppPrinter {
                     mediaType = selectMattePhotoMediaType(mediaTypes),
                     useTls = endpoint.useTls,
                     certificateSha256 = endpoint.certificateSha256,
-                    supportsJpeg = formats.isEmpty() || formats.any {
+                    supportsJpeg = formats.any {
                         it.equals(DirectPrinterProfile.JPEG_MIME_TYPE, ignoreCase = true)
                     },
-                    reportedFiveBySeven = media.isEmpty() || fiveBySeven != null,
+                    reportedFiveBySeven = fiveBySeven != null,
                 )
             } catch (error: Exception) {
                 lastError = error
@@ -198,7 +206,7 @@ object DirectIppPrinter {
         val detail = lastError?.message?.takeIf(String::isNotBlank)
         throw IOException(
             buildString {
-                append("The printer was found at ${parsed.host}, but its print service could not be opened.")
+                append("The printer's encrypted print service could not be opened.")
                 if (detail != null) append(" $detail")
             },
             lastError,
@@ -223,7 +231,7 @@ object DirectIppPrinter {
         }
 
         if (!profile.readyForDirectPrint) {
-            throw IOException("Open Printer Setup and reconnect once to save the printer's secure certificate.")
+            throw IOException("Encrypted printing is required. Open Printer Setup and reconnect securely.")
         }
         val endpoint = PrinterEndpoint(
             host = profile.host,
@@ -276,6 +284,7 @@ object DirectIppPrinter {
         document: File?,
         timeoutMs: Int,
     ): IppPacket {
+        require(endpoint.useTls) { "Unencrypted printing is disabled." }
         val packetBytes = java.io.ByteArrayOutputStream().use { output ->
             IppOutputStream(output).write(packet)
             output.toByteArray()
@@ -288,7 +297,7 @@ object DirectIppPrinter {
             connection.doOutput = true
             connection.connectTimeout = 8_000
             connection.readTimeout = timeoutMs
-            connection.instanceFollowRedirects = true
+            connection.instanceFollowRedirects = false
             connection.setRequestProperty("Content-Type", "application/ipp")
             connection.setRequestProperty("Accept", "application/ipp")
             connection.setRequestProperty("User-Agent", "ID Photo Print/1.0")
@@ -411,6 +420,9 @@ object DirectIppPrinter {
         } ?: mediaTypes.firstOrNull { "matte" in it.lowercase() }
         ?: DirectPrinterProfile.DEFAULT_MATTE_MEDIA_TYPE
 }
+
+internal fun isL15150Printer(model: String, name: String): Boolean =
+    Regex("(?i)\\bL15150\\b").containsMatchIn("$model $name")
 
 private data class PrinterEndpoint(
     val host: String,

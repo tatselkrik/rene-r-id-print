@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,20 +34,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.idphoto.printing.print.DirectIppPrinter
 import com.idphoto.printing.print.DirectPrinterSettings
 import com.idphoto.printing.print.EpsonPrinterDiscovery
-import kotlinx.coroutines.Dispatchers
+import com.idphoto.printing.print.PrinterConnection
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
-fun PrinterSetupScreen(onBack: () -> Unit) {
+fun PrinterSetupScreen(printerConnection: PrinterConnection, onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var profile by remember { mutableStateOf(DirectPrinterSettings.load(context)) }
     var address by remember { mutableStateOf(profile?.addressLabel.orEmpty()) }
     var isBusy by remember { mutableStateOf(false) }
+    val connectionState by printerConnection.state.collectAsStateWithLifecycle()
+    val working = isBusy || connectionState.checking
+    LaunchedEffect(connectionState.profile) {
+        connectionState.profile?.let {
+            profile = it
+            address = it.addressLabel
+        }
+    }
     var statusMessage by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -57,6 +66,8 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
             statusMessage = null
             try {
                 statusMessage = block()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 errorMessage = error.message ?: "The printer setup could not be completed."
             } finally {
@@ -81,7 +92,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Text(
-            text = "Set this up once. Afterward, Print sends the sheet straight to the L15150.",
+            text = "The app connects automatically. Use this page if a secure connection needs attention.",
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
@@ -104,7 +115,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                     Text(
                         when {
                             profile == null -> "No Direct Printer Saved"
-                            profile?.readyForDirectPrint == true -> "Direct Printer Ready"
+                            connectionState.profile != null -> "Direct Printer Ready"
                             profile?.certificateSha256.isNullOrBlank() -> "Secure Reconnect Required"
                             else -> "Compatible Direct Format Not Found"
                         },
@@ -132,8 +143,6 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                         Text(
                             if (it.readyForDirectPrint && it.useTls) {
                                 "Connection: Encrypted IPPS"
-                            } else if (it.readyForDirectPrint) {
-                                "Connection: IPP"
                             } else {
                                 "Tap Connect Using This Address once to save the secure connection."
                             },
@@ -174,10 +183,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                     startWork {
                         val found = EpsonPrinterDiscovery.find(context)
                         address = found.probeAddress
-                        val connected = withContext(Dispatchers.IO) {
-                            DirectIppPrinter.probe(found.probeAddress)
-                        }
-                        DirectPrinterSettings.save(context, connected)
+                        val connected = printerConnection.connect(found.probeAddress)
                         profile = connected
                         if (connected.useTls) {
                             "Connected securely to ${connected.displayName}."
@@ -186,7 +192,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                         }
                     }
                 },
-                enabled = !isBusy,
+                enabled = !working,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
             ) {
@@ -202,7 +208,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                 value = address,
                 onValueChange = { address = it },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isBusy,
+                enabled = !working,
                 singleLine = true,
                 label = { Text("Printer IP address") },
                 supportingText = { Text("Example: 192.168.1.25") },
@@ -211,10 +217,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
             OutlinedButton(
                 onClick = {
                     startWork {
-                        val connected = withContext(Dispatchers.IO) {
-                            DirectIppPrinter.probe(address)
-                        }
-                        DirectPrinterSettings.save(context, connected)
+                        val connected = printerConnection.connect(address)
                         profile = connected
                         address = connected.addressLabel
                         if (connected.useTls) {
@@ -224,16 +227,17 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
                         }
                     }
                 },
-                enabled = !isBusy && address.isNotBlank(),
+                enabled = !working && address.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
             ) {
                 Text("Connect Using This Address")
             }
 
+            Text(connectionState.message, color = Muted)
             statusMessage?.let { MessageCard(it, isError = false) }
             errorMessage?.let { MessageCard(it, isError = true) }
-            if (isBusy) {
+            if (working) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -245,7 +249,7 @@ fun PrinterSetupScreen(onBack: () -> Unit) {
 
         OutlinedButton(
             onClick = onBack,
-            enabled = !isBusy,
+            enabled = !working,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp)

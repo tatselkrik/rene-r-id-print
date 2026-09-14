@@ -2,9 +2,22 @@
 
 [![Android quality checks](https://github.com/tatselkrik/rene-r-id-print/actions/workflows/android-quality.yml/badge.svg)](https://github.com/tatselkrik/rene-r-id-print/actions/workflows/android-quality.yml)
 
-Rene'R ID Print is a custom Android app built specifically for Rene'R's in-house ID-photo service. It guides the operator through capturing one person, choosing one of eight maximum-use, even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos, and producing an accurately sized 5×7-inch sheet. The finished sheet can be previewed, saved, shared, or printed directly to an Epson EcoTank L15150 over local Wi-Fi. The app is privately distributed for this business and is not available on Google Play.
+Rene'R ID Print is a custom Android app built specifically for Rene'R's in-house ID-photo service. It guides the operator through capturing one person, choosing one of eight maximum-use, even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos, and producing an accurately sized 5×7-inch sheet. The finished sheet can be previewed, saved, shared, or printed directly to an Epson EcoTank L15150 over local Wi-Fi. The app is designed for this business and is not available on Google Play. Signed installers are available through GitHub Releases.
 
-## Version 1.0.2 release status
+## Version 1.0.3
+
+Version 1.0.3 passed local build, 43 unit tests, release lint, signing/integrity checks, and emulator checks. Kirk confirmed successful phone testing and approved release on September 14, 2026.
+
+Version 1.0.3 uses a new signing identity. Uninstall the older signed app before installing v1.0.3, saving any photos that need to be kept first. Uninstalling clears the app's private settings and cache. Future builds reuse the new key automatically on the configured Windows account without a password prompt; see `GIT_AND_RELEASE_GUIDE.md`.
+
+- Opening or returning to the app checks the saved printer automatically. Wi-Fi connection changes also trigger a check while the app is visible. If its address changed, discovery searches for the L15150 and verifies the saved certificate before updating the address.
+- With no saved printer, the app can pair automatically when discovery finds exactly one L15150. Multiple matching printers require selection by address in Printer Setup. Initial pairing trusts the certificate presented on the local network; subsequent automatic connections must match it.
+- Camera capture remains available while the printer is being checked or is offline. The camera and preview display connection status. Print retries connection if no printer is ready.
+- Only encrypted IPPS printing is permitted. Legacy unencrypted connections need one explicit secure setup. Changed certificates require an explicit reconnect in Printer Setup and are never silently replaced by automatic discovery.
+- Face and eye positions must fit inside the square crop. Layouts containing passport photos also require the detected face and both eyes to fit inside the narrower passport crop. These checks apply to Print, Save, and Share. They detect clipping; they do not certify passport compliance or account for all hair/head-covering boundaries.
+- The existing eight layouts, size corrections, color behavior, application identifier, and Android dependency versions are retained.
+
+## Version 1.0.2 baseline
 
 Implemented in this milestone:
 
@@ -60,7 +73,7 @@ The normal workflow is guided capture, automatic checking, combination selection
 5. Open this folder using **File → Open**. Do not create a second empty project. Choose **Trust Project** if asked, then allow Gradle sync and dependency downloads to finish.
 6. On the Samsung phone, enable Developer options and USB debugging. Connect it using a data-capable USB cable and accept the phone's debugging authorization prompt. On Windows, install Samsung's Android USB driver only if Android Studio cannot detect the phone.
 7. Select the Samsung phone in Android Studio's device menu, choose the `app` run configuration, and click **Run**. Grant camera permission on first launch.
-8. Connect the phone and L15150 to the same bridged home LAN. They may use different access points or repeater SSIDs as long as client isolation and repeater router/NAT mode do not separate them. In the app, open **Printer setup** and connect once. The app securely remembers the printer's certificate and IP address.
+8. Connect the phone and L15150 to the same local network, normally the same Wi-Fi. Open the app and wait for **Printer ready**. If automatic discovery needs help, open **Printer Setup** and connect by address once. The app remembers the printer's certificate and address and checks it again when opened or brought back to the foreground. Local printing does not require internet access.
 
 Android Studio, internet access during the first Gradle sync, the Samsung phone, a USB data cable, and the printer are the only essentials. Kotlin, Compose, CameraX, ML Kit, Gradle, and JUnit are project dependencies; Gradle downloads them automatically. Photoshop, Python, Node.js, a database, and a cloud service are not required.
 

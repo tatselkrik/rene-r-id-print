@@ -14,6 +14,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.idphoto.printing.print.PrinterConnection
+import com.idphoto.printing.print.watchWifi
 import com.idphoto.printing.analysis.CheckStatus
 import com.idphoto.printing.analysis.BlurDetector
 import com.idphoto.printing.analysis.PhotoAnalyzer
@@ -31,6 +37,7 @@ import com.idphoto.printing.ui.ReviewScreen
 import com.idphoto.printing.ui.SheetPreviewScreen
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
@@ -55,6 +62,14 @@ private enum class WorkflowScreen {
 @Composable
 private fun IdPhotoWorkflow() {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val printerConnection = remember { PrinterConnection.create(context) }
+    val printerState by printerConnection.state.collectAsStateWithLifecycle()
+    LaunchedEffect(lifecycleOwner, printerConnection) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            printerConnection.watchWifi(context)
+        }
+    }
     val analyzer = remember { PhotoAnalyzer(context) }
     val backgroundWhitener = remember { BackgroundWhitener() }
     var screen by remember { mutableStateOf(WorkflowScreen.CAPTURE) }
@@ -110,6 +125,8 @@ private fun IdPhotoWorkflow() {
             if (checkedReview.cropPlan != null) {
                 whiteBackgroundBitmap = backgroundWhitener.whiten(loaded)
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Exception) {
             if (originalBitmap == null || review == null) {
                 review = PhotoReview(
@@ -149,6 +166,7 @@ private fun IdPhotoWorkflow() {
 
     when (screen) {
         WorkflowScreen.CAPTURE -> CaptureScreen(
+            printerState = printerState,
             onCaptured = { capture ->
                 capturedPhoto = capture
                 screen = WorkflowScreen.REVIEW
@@ -174,12 +192,15 @@ private fun IdPhotoWorkflow() {
             onPreview = { screen = WorkflowScreen.PREVIEW },
         )
         WorkflowScreen.PREVIEW -> SheetPreviewScreen(
+            printerConnection = printerConnection,
+            printerState = printerState,
             bitmap = requireNotNull(activeBitmap),
             review = requireNotNull(review),
             combination = selectedCombination,
             onBack = { screen = WorkflowScreen.COMBINATION },
         )
         WorkflowScreen.PRINTER_SETUP -> PrinterSetupScreen(
+            printerConnection = printerConnection,
             onBack = { screen = WorkflowScreen.CAPTURE },
         )
     }

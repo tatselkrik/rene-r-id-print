@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.idphoto.printing.core.FloatRect
+import com.idphoto.printing.print.PrinterConnectionState
 import java.io.File
 import java.util.Locale
 import kotlin.math.min
@@ -74,6 +75,7 @@ data class CapturedPhoto(
 @androidx.annotation.OptIn(markerClass = [TransformExperimental::class])
 @Composable
 fun CaptureScreen(
+    printerState: PrinterConnectionState,
     onCaptured: (CapturedPhoto) -> Unit,
     onPrinterSetup: () -> Unit,
 ) {
@@ -300,6 +302,14 @@ fun CaptureScreen(
                     }
                 }
                 Spacer(Modifier.height(10.dp))
+                Text(
+                    text = printerState.message,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(6.dp))
                 OutlinedButton(
                     onClick = onPrinterSetup,
                     enabled = !isCapturing,
