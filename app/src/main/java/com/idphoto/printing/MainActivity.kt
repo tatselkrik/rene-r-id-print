@@ -28,6 +28,8 @@ import com.idphoto.printing.core.ImageSize
 import com.idphoto.printing.core.SheetCombination
 import com.idphoto.printing.image.BackgroundWhitener
 import com.idphoto.printing.image.BitmapLoader
+import com.idphoto.printing.image.PhotoAdjustments
+import com.idphoto.printing.image.PhotoAdjustmentProcessor
 import com.idphoto.printing.ui.CapturedPhoto
 import com.idphoto.printing.ui.CaptureScreen
 import com.idphoto.printing.ui.CombinationScreen
@@ -39,6 +41,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,11 +83,60 @@ private fun IdPhotoWorkflow() {
     var review by remember { mutableStateOf<PhotoReview?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
     var selectedCombination by remember { mutableStateOf(SheetCombination.DEFAULT) }
+    var adjustments by remember { mutableStateOf(PhotoAdjustments.NEUTRAL) }
+    var autoAdjust by remember { mutableStateOf(false) }
+    var automaticAdjustments by remember { mutableStateOf(PhotoAdjustments.NEUTRAL) }
+    var automaticSource by remember { mutableStateOf<Bitmap?>(null) }
+    var adjustedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var appliedSource by remember { mutableStateOf<Bitmap?>(null) }
+    var appliedSettings by remember { mutableStateOf<PhotoAdjustments?>(null) }
+    var adjustmentError by remember { mutableStateOf<String?>(null) }
 
-    val activeBitmap = if (whiteBackgroundEnabled) {
+    val sourceBitmap = if (whiteBackgroundEnabled) {
         whiteBackgroundBitmap ?: originalBitmap
     } else {
         originalBitmap
+    }
+    val effectiveAdjustments = if (autoAdjust) automaticAdjustments else adjustments
+    val adjustmentsReady = (!autoAdjust || automaticSource === sourceBitmap) &&
+        (effectiveAdjustments == PhotoAdjustments.NEUTRAL ||
+            (appliedSource === sourceBitmap && appliedSettings == effectiveAdjustments))
+    val activeBitmap = if (effectiveAdjustments == PhotoAdjustments.NEUTRAL) sourceBitmap
+        else if (appliedSource === sourceBitmap) adjustedBitmap ?: sourceBitmap else sourceBitmap
+
+    LaunchedEffect(sourceBitmap, review?.cropPlan) {
+        automaticAdjustments = PhotoAdjustments.NEUTRAL
+        automaticSource = null
+        val source = sourceBitmap ?: return@LaunchedEffect
+        val currentReview = review ?: return@LaunchedEffect
+        val crop = currentReview.cropPlan?.square ?: return@LaunchedEffect
+        automaticAdjustments = withContext(Dispatchers.Default) {
+            PhotoAdjustmentProcessor.automatic(source, crop, currentReview.imageSize)
+        }
+        automaticSource = source
+    }
+    LaunchedEffect(sourceBitmap, effectiveAdjustments) {
+        adjustmentError = null
+        val source = sourceBitmap ?: return@LaunchedEffect
+        if (effectiveAdjustments == PhotoAdjustments.NEUTRAL) {
+            adjustedBitmap = null
+            appliedSource = null
+            appliedSettings = null
+            return@LaunchedEffect
+        }
+        delay(80) // Coalesce rapid slider updates; only a complete result becomes exportable.
+        try {
+            val result = withContext(Dispatchers.Default) {
+                PhotoAdjustmentProcessor.apply(source, effectiveAdjustments)
+            }
+            adjustedBitmap = result
+            appliedSource = source
+            appliedSettings = effectiveAdjustments
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            adjustmentError = "Adjustments could not be applied. Try Reset or retake."
+        }
     }
 
     DisposableEffect(analyzer, backgroundWhitener) {
@@ -94,19 +146,8 @@ private fun IdPhotoWorkflow() {
         }
     }
 
-    DisposableEffect(originalBitmap) {
-        val bitmapToRecycle = originalBitmap
-        onDispose {
-            if (bitmapToRecycle?.isRecycled == false) bitmapToRecycle.recycle()
-        }
-    }
-
-    DisposableEffect(whiteBackgroundBitmap) {
-        val bitmapToRecycle = whiteBackgroundBitmap
-        onDispose {
-            if (bitmapToRecycle?.isRecycled == false) bitmapToRecycle.recycle()
-        }
-    }
+    // Let Android reclaim displayed bitmaps once the renderer and cancellable workers
+    // release them. Explicit recycling here races background adjustment processing.
 
     LaunchedEffect(capturedPhoto) {
         val capture = capturedPhoto ?: return@LaunchedEffect
@@ -116,6 +157,9 @@ private fun IdPhotoWorkflow() {
         originalBitmap = null
         whiteBackgroundBitmap = null
         whiteBackgroundEnabled = true
+        adjustments = PhotoAdjustments.NEUTRAL
+        autoAdjust = false
+        adjustedBitmap = null
         try {
             val analyzed = analyzer.analyze(Uri.fromFile(file), capture.cameraSquare)
             val loaded = withContext(Dispatchers.IO) { BitmapLoader.load(file) }
@@ -143,10 +187,13 @@ private fun IdPhotoWorkflow() {
     }
 
     fun retake() {
-        originalBitmap?.recycle()
         originalBitmap = null
-        whiteBackgroundBitmap?.recycle()
         whiteBackgroundBitmap = null
+        adjustedBitmap = null
+        appliedSource = null
+        appliedSettings = null
+        adjustments = PhotoAdjustments.NEUTRAL
+        autoAdjust = false
         whiteBackgroundEnabled = true
         review = null
         capturedPhoto?.file?.delete()
@@ -182,6 +229,12 @@ private fun IdPhotoWorkflow() {
             whiteBackgroundEnabled = whiteBackgroundEnabled,
             whiteBackgroundAvailable = whiteBackgroundBitmap != null,
             onWhiteBackgroundChange = { whiteBackgroundEnabled = it },
+            adjustments = effectiveAdjustments,
+            autoAdjust = autoAdjust,
+            onAdjustmentsChange = { adjustments = it },
+            onAutoChange = { adjustments = PhotoAdjustments.NEUTRAL; autoAdjust = it },
+            adjustmentsReady = adjustmentsReady,
+            adjustmentError = adjustmentError,
             onRetake = ::retake,
             onContinue = { screen = WorkflowScreen.COMBINATION },
         )

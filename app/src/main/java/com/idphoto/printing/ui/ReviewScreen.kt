@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.idphoto.printing.analysis.CheckStatus
 import com.idphoto.printing.analysis.PhotoReview
+import com.idphoto.printing.image.PhotoAdjustments
 
 @Composable
 fun ReviewScreen(
@@ -44,6 +48,12 @@ fun ReviewScreen(
     whiteBackgroundEnabled: Boolean,
     whiteBackgroundAvailable: Boolean,
     onWhiteBackgroundChange: (Boolean) -> Unit,
+    adjustments: PhotoAdjustments,
+    autoAdjust: Boolean,
+    onAdjustmentsChange: (PhotoAdjustments) -> Unit,
+    onAutoChange: (Boolean) -> Unit,
+    adjustmentsReady: Boolean,
+    adjustmentError: String?,
     onRetake: () -> Unit,
     onContinue: () -> Unit,
 ) {
@@ -52,24 +62,17 @@ fun ReviewScreen(
             .fillMaxSize()
             .background(CanvasCream)
             .safeDrawingPadding()
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Text(
             text = "Automatic Check",
             modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Ink,
             textAlign = TextAlign.Center,
         )
-        Text(
-            text = "The original photo is checked before either crop is created.",
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(8.dp))
 
         Column(
             modifier = Modifier
@@ -109,80 +112,52 @@ fun ReviewScreen(
                     )
                 }
             } else if (bitmap != null && review?.cropPlan != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CropPreviewCard(
-                        label = "Square Crop",
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        PhotoCrop(
-                            bitmap = bitmap,
-                            crop = review.cropPlan.square,
-                            originalSize = review.imageSize,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                        )
-                    }
-                    CropPreviewCard(
-                        label = "Passport Size (35 × 45 mm)",
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        PhotoCrop(
-                            bitmap = bitmap,
-                            crop = review.cropPlan.passport,
-                            originalSize = review.imageSize,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(35f / 45f),
-                        )
-                    }
-                }
-                Spacer(Modifier.height(18.dp))
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = WarmWhite,
-                    shape = RoundedCornerShape(16.dp),
-                    shadowElevation = 1.dp,
-                ) {
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val photoHeight = minOf((maxWidth - 12.dp) / 2, 180.dp)
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "White Background + Lighting",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Ink,
-                            )
-                            Text(
-                                text = when {
-                                    whiteBackgroundAvailable && whiteBackgroundEnabled ->
-                                        "The background is white and subject shadows are gently lifted. Turn it off to compare the original."
-                                    whiteBackgroundAvailable ->
-                                        "The untouched original background is shown."
-                                    else ->
-                                        "Background whitening was unavailable; the original is shown."
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Muted,
-                            )
+                        Surface(shape = RoundedCornerShape(8.dp)) {
+                            PhotoCrop(bitmap, review.cropPlan.square, review.imageSize,
+                                Modifier.height(photoHeight).aspectRatio(1f))
                         }
-                        Spacer(Modifier.size(12.dp))
+                        Surface(shape = RoundedCornerShape(8.dp)) {
+                            PhotoCrop(bitmap, review.cropPlan.passport, review.imageSize,
+                                Modifier.height(photoHeight).aspectRatio(35f / 45f))
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Background", style = MaterialTheme.typography.bodyMedium)
                         Switch(
                             checked = whiteBackgroundEnabled && whiteBackgroundAvailable,
                             onCheckedChange = onWhiteBackgroundChange,
                             enabled = whiteBackgroundAvailable,
+                            modifier = Modifier.semantics { contentDescription = "Background" },
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Auto", style = MaterialTheme.typography.bodyMedium)
+                        Switch(
+                            checked = autoAdjust,
+                            onCheckedChange = onAutoChange,
+                            modifier = Modifier.semantics { contentDescription = "Auto" },
                         )
                     }
                 }
-                Spacer(Modifier.height(10.dp))
+                PhotoAdjustmentControls(adjustments, autoAdjust, onAdjustmentsChange)
+                adjustmentError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
             }
-
             review?.checks?.forEach { check ->
                 val statusColor = when (check.status) {
                     CheckStatus.PASS -> Pine
@@ -239,7 +214,7 @@ fun ReviewScreen(
             }
             Button(
                 onClick = onContinue,
-                enabled = review?.cropPlan != null && bitmap != null && !isLoading,
+                enabled = review?.cropPlan != null && bitmap != null && !isLoading && adjustmentsReady,
                 modifier = Modifier.weight(1f),
             ) {
                 Text("Layout")
@@ -248,27 +223,3 @@ fun ReviewScreen(
     }
 }
 
-@Composable
-private fun CropPreviewCard(
-    label: String,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Column(modifier) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            shadowElevation = 2.dp,
-        ) {
-            content()
-        }
-        Text(
-            text = label,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 6.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = Muted,
-            textAlign = TextAlign.Center,
-        )
-    }
-}

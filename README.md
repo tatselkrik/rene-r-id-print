@@ -4,6 +4,17 @@
 
 Rene'R ID Print is a custom Android app built specifically for Rene'R's in-house ID-photo service. It guides the operator through capturing one person, choosing one of eight maximum-use, even-numbered combinations of 2×2-inch, passport-size, and 1×1-inch photos, and producing an accurately sized 5×7-inch sheet. The finished sheet can be previewed, saved, shared, or printed directly to an Epson EcoTank L15150 over local Wi-Fi. The app is designed for this business and is not available on Google Play. Signed installers are available through GitHub Releases.
 
+## Version 1.0.4 — Photo adjustments
+
+- Added Brightness, Contrast, Vibrance, Saturation, and Temperature (cooler/warmer) below the compact **Background** and **Auto** toggle row. There is no Exposure control.
+- **Auto** provides bounded brightness/contrast correction and disables manual sliders while enabled. Switching Auto clears manual adjustments; turning it off returns all sliders to zero. Each new capture starts neutral with Auto off. There is no Reset button.
+- The compact review screen places the crop images first, then Background/Auto, then Brightness and Contrast. The remaining sliders and checks are available by scrolling.
+- Adjustments use the original working image each time, so edits do not accumulate. Both crop previews, the sheet preview, Save, Share, and Print use the same adjusted image. Layout waits until processing finishes.
+- Transparent replacement backgrounds remain white. Direct printing still adds the established L15150/RC Woven color and size corrections.
+- Version 1.0.4 reuses the v1.0.3 signing identity and installs as an update. Kirk confirmed all physical checks passed on September 22, 2026, including printing the adjusted settings, and approved publication.
+
+The superseded early project-context document has been removed. Current behavior is documented here; project constraints and signing instructions remain in `AGENTS.md`, `memory.md`, and `GIT_AND_RELEASE_GUIDE.md`. Earlier source remains in Git history.
+
 ## Version 1.0.3
 
 Version 1.0.3 passed local build, 43 unit tests, release lint, signing/integrity checks, and emulator checks. Kirk confirmed successful phone testing and approved release on September 14, 2026.
@@ -39,7 +50,7 @@ Implemented in this milestone:
 
 ## App walkthrough
 
-The normal workflow is guided capture, automatic checking, combination selection, and print-ready output.
+The normal workflow is guided capture, automatic checking, combination selection, and print-ready output. The walkthrough images below show the earlier interface, before the v1.0.4 adjustment controls.
 
 <table>
   <tr>
