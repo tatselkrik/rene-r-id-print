@@ -4,13 +4,13 @@
 
 Rene'R ID Print is a custom Android app for Rene'R's in-house ID-photo service. Capture one person, adjust the photo, choose one of eight combinations of 2×2-inch, 35×45 mm passport-size and 1×1-inch photos, then preview, save, share or print a 5×7-inch sheet directly to an Epson EcoTank L15150 over local Wi-Fi.
 
-## Current release — v1.0.4
+## Current release — v1.0.5
 
-**[Download the signed APK](https://github.com/tatselkrik/rene-r-id-print/releases/download/v1.0.4/ReneR-ID-Print-v1.0.4.apk)** · **[Release notes and checksum](https://github.com/tatselkrik/rene-r-id-print/releases/tag/v1.0.4)**
+**[Download the signed APK](https://github.com/tatselkrik/rene-r-id-print/releases/download/v1.0.5/ReneR-ID-Print-v1.0.5.apk)** · **[Release notes and checksum](https://github.com/tatselkrik/rene-r-id-print/releases/tag/v1.0.5)**
 
-Version 1.0.4 was released on September 22, 2026. Phone testing confirmed the compact controls work and the adjusted settings appear in printed photos. [GitHub quality checks passed for the release commit](https://github.com/tatselkrik/rene-r-id-print/actions/runs/35684277649).
+Version 1.0.5 corrects camera-guide mapping across different JPEG orientations, addressing the tighter crop observed on the A14 5G. Kirk confirmed successful phone testing on September 23, 2026, following comparison with the S24 FE. The existing adjustments, sheet layouts and printing calibration are retained.
 
-The app is distributed as a signed APK, not through Google Play. Install v1.0.4 over v1.0.3 or an existing v1.0.4 test build without uninstalling. Versions 1.0.0–1.0.2 used the original signing identity and must be uninstalled first; save any photos you need before doing so, as uninstalling clears private settings and cache.
+The app is distributed as a signed APK, not through Google Play. Install v1.0.5 over v1.0.3, v1.0.4 or an existing v1.0.5 test build without uninstalling. Versions 1.0.0–1.0.2 used the original signing identity and must be uninstalled first; save any photos you need before doing so, as uninstalling clears private settings and cache.
 
 ## Using the app
 
@@ -128,6 +128,13 @@ Face checks and image adjustments run on-device. Captures and temporary generate
 The app targets the established L15150/RC Woven 5×7 workflow. Other paper sizes, printer calibration, remote internet printing, authority-specific passport composition rules and automatic photo-retention policies are outside the current implementation.
 
 ## Version history
+
+### v1.0.5 — Camera framing correction
+
+- Maps the camera guide into the upright saved JPEG using the shared preview/capture region.
+- Handles JPEGs stored with different rotation conventions and rejects incompatible proportions instead of silently tightening the crop.
+- Confirmed working after the A14 5G and S24 FE comparison; physical test approval received September 23, 2026.
+- Retains the v1.0.4 controls, layouts, printer settings and signing identity.
 
 ### v1.0.4 — Compact photo adjustments
 

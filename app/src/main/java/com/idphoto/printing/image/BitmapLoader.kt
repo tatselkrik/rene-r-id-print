@@ -5,10 +5,20 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
+import com.idphoto.printing.core.CaptureGuideMapper
+import com.idphoto.printing.core.ImageSize
 import kotlin.math.max
 
 object BitmapLoader {
     private const val MAX_DECODED_DIMENSION = 4096
+
+    fun uprightSize(file: File): ImageSize {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        return CaptureGuideMapper.uprightSize(
+            ImageSize(bounds.outWidth, bounds.outHeight), ExifInterface(file).rotationDegrees,
+        )
+    }
 
     fun load(file: File): Bitmap {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

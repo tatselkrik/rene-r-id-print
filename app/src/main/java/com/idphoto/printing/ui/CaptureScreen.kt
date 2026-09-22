@@ -2,7 +2,6 @@ package com.idphoto.printing.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.RectF
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -12,8 +11,6 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.camera.view.TransformExperimental
-import androidx.camera.view.transform.CoordinateTransform
-import androidx.camera.view.transform.FileTransformFactory
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -61,11 +58,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.idphoto.printing.core.CaptureGuideMapper
+import com.idphoto.printing.core.ImageSize
+import com.idphoto.printing.image.BitmapLoader
 import com.idphoto.printing.core.FloatRect
 import com.idphoto.printing.print.PrinterConnectionState
 import java.io.File
 import java.util.Locale
-import kotlin.math.min
 
 data class CapturedPhoto(
     val file: File,
@@ -216,6 +215,7 @@ fun CaptureScreen(
                             return@Button
                         }
                         isCapturing = true
+                        val previewSize = ImageSize(activePreview.width, activePreview.height)
                         val guide = squareGuideRect(
                             width = activePreview.width.toFloat(),
                             height = activePreview.height.toFloat(),
@@ -237,35 +237,17 @@ fun CaptureScreen(
                             object : ImageCapture.OnImageSavedCallback {
                                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                                     try {
-                                        val savedImageTransform = FileTransformFactory().apply {
-                                            setUsingExifOrientation(true)
-                                        }.getOutputTransform(photoFile)
-                                        val mappedGuide = RectF(
-                                            guide.left,
-                                            guide.top,
-                                            guide.right,
-                                            guide.bottom,
+                                        // LifecycleCameraController binds both use cases to PreviewView's
+                                        // viewport. Saved JPEGs are cropped to it by CameraX; normalize
+                                        // in upright coordinates rather than mixing raw buffer rotations.
+                                        val mappedGuide = CaptureGuideMapper.map(
+                                            previewSize, BitmapLoader.uprightSize(photoFile), guide,
                                         )
-                                        CoordinateTransform(
-                                            previewTransform,
-                                            savedImageTransform,
-                                        ).mapRect(mappedGuide)
-                                        val side = min(mappedGuide.width(), mappedGuide.height())
-                                        if (!side.isFinite() || side <= 0f) {
-                                            error("The square guide could not be matched to the saved photo.")
-                                        }
-                                        val centerX = mappedGuide.centerX()
-                                        val centerY = mappedGuide.centerY()
                                         isCapturing = false
                                         onCaptured(
                                             CapturedPhoto(
                                                 file = photoFile,
-                                                cameraSquare = FloatRect(
-                                                    left = centerX - side / 2f,
-                                                    top = centerY - side / 2f,
-                                                    right = centerX + side / 2f,
-                                                    bottom = centerY + side / 2f,
-                                                ),
+                                                cameraSquare = mappedGuide,
                                             ),
                                         )
                                     } catch (error: Exception) {

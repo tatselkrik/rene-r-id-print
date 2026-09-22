@@ -23,3 +23,7 @@
 ## 2026-09-22
 
 - Kirk confirmed all physical checks passed for the compact v1.0.4 candidate, including printing with the adjusted settings, and authorized Git/release publication. This supersedes the pending phone-approval status above. Preserve this exact tested APK and the existing automatic signing identity.
+
+## 2026-09-23
+
+- Kirk confirmed v1.0.5 works and authorized publication after comparing A14 5G and S24 FE framing. The candidate replaces the raw-buffer/file transform and smaller-side selection with normalized guide mapping into the upright JPEG, relying on CameraX's existing shared viewport. Keep proportion-mismatch rejection and orientation/resolution tests. Phone results support the correction; the exact device-internal cause was not independently measured.
